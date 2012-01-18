@@ -1,0 +1,15 @@
+LEX    = flex
+BISON  = bison
+BFLAGS = --defines=y.tab.h --output=y.tab.c
+
+test1:	lex.yy.c y.tab.c
+		gcc $^ -o $@ -lm -ly
+
+y.tab.c:	test1-parser.y
+		bison -dy $<
+
+lex.yy.c:	test1-lex.l
+		flex $<
+
+clean:
+		rm test1 y.tab.h lex.yy.c y.tab.c

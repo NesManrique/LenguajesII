@@ -1,0 +1,36 @@
+
+#Especificación del lenguaje D:
+
+#Introducción
+
+Este documento explica la expecificación del lenguaje BLAH. Es un lenguaje simple, de alcance estático, imperativo, sin orientación a objetos con un
+sistema de tipos estático y similar a C/C++. El propósito del mismo está pensado para desarrollar operaciones de manipulación de strings en general y
+memeficar los archivos.
+
+#Léxico
+
+El léxico del lenguaje está inspirado en nuestro espíritu geek, por tanto, se basa en 
+
+#Gramática
+
+#Estructura de los programas
+
+
+#Alcance
+#Tipos
+#Variables
+#Arreglos
+#Cadenas de Caracteres
+#Funciones
+#Invocacion de funciones
+#Registros y Uniones
+#Equivalencia de tipos y compatibilidad
+#Asignación
+#Estructuras de control
+#Expresiones
+#Funciones de libreria (I/O)
+#Programación Modular
+#Chequeos a tiempo de ejecución
+#Lo que no tiene el lenguaje
+#
+
