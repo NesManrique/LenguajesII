@@ -1,0 +1,24 @@
+
+//constantes
+true -> success;
+false -> fail;
+
+//tipos escalares
+le foo:int;
+le bar:bool;
+le baz:char;
+le algo:float;
+
+//coleccion
+iliketrains of //arreglos
+                //strings
+
+//registro y unión
+
+
+//función
+le nombredefuncion(int a, bool b): tipoquedevuelve{
+    
+}
+
+//
