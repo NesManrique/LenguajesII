@@ -1,15 +1,20 @@
 
 //constantes
-true -> success;
-false -> fail;
+true;
+false;
+
 
 //tipos escalares
-le foo:int;
-le bar:bool;
-le baz:char;
-le algo:float;
+integer x is 10, y is 3, u is 8.
+character c is 'a'. 
+floating x.
+boolean t.
+
 
 //coleccion
+array of integer x.
+string x. //string es un arreglo de caracteres con informacion del tamano.
+
 iliketrains of //arreglos
                 //strings
 
@@ -17,8 +22,29 @@ iliketrains of //arreglos
 
 
 //función
-le nombredefuncion(int a, bool b): tipoquedevuelve{
+character function nombredefuncion(integer a, boolean b){
     
 }
 
-//
+integer function fibonacci (integer n) {
+	integer x is 1,y is 1.
+	if n isequal 0 or n isequal 1 then {
+		return 1.
+	} 
+	
+	for i from 0 to n {
+		integer temp is x plus y.
+		y is x.
+		x is temp.
+	}
+	return x.
+}
+
+
+//break de c es stop
+//continue de c es next
+
+while cond do {
+
+}
+
