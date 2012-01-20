@@ -4,6 +4,9 @@ true;
 false;
 
 
+123
+01267
+0x1af4
 //tipos escalares
 integer x is 10, y is 3, u is 8.
 character c is 'a'. 
@@ -15,16 +18,26 @@ boolean t.
 array of integer x.
 string x. //string es un arreglo de caracteres con informacion del tamano.
 
-iliketrains of //arreglos
-                //strings
 
 //registro y unión
+register nombretipo{
+	
+} nombrevariable.
+
+union nombretipo{
+
+} nombrevariable
+
+
+register->f
 
 
 //función
 character function nombredefuncion(integer a, boolean b){
     
 }
+
+a[1]
 
 integer function fibonacci (integer n) {
 	integer x is 1,y is 1.
