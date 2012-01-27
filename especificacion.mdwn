@@ -15,7 +15,7 @@ ni redefinidas son:
     integer, boolean, floating, character, string, for, from, to,
     while, do, if, then, else, return, stop, next, print, read,
     register, union, array, of, true, false, function, plus, minus,
-    times, dividedby.
+    times, dividedby, void.
 
 Un identificador es una secuencia de letras, dígitos y underscores, comenzando por una letra. BLAH es sensible a la capitalización, por ejemplo, foo y FOO
 son identificadores diferentes. Tamaño máximo de los identificadores sin definir todavia.
@@ -39,7 +39,7 @@ pero 12.0 y 0.12 si lo son. Un número decimal puede tener un exponente opcional
 seguido del exponente, por ejemplo, `55.7E+2`, `0.34e-8`. Como se explicó más arriba `34.E+2` y `.12e-15` son inválidos. Si no se especifica el signo del
 exponente el positivo (+) es asumido.
 
-Una secuencia de caracteres encerrada entre comillas simples constituyen un string literal, es inválido escribir comilla simple en un string de este tipo. 
+Una secuencia de caracteres encerrada entre comillas simples constituyen un string literal, es inválido escribir comilla simple en un string de este tipo.  
 Una secuencia de caracteres entre comillas dobles requieren escapar signos especiales para tomarlos como parte de la cadena. Un string debe empezar y terminar
 en la misma línea no puede ser picado en varias líneas. Para ilustrar lo anterior:
 
@@ -69,17 +69,121 @@ no se anidan.
 
 ##Estructura de los programas
 
+Un programa de BLAH es una secuencia de declaraciones, donde cada declaración establece una variable o una función. Una declaración se refiere
+a una sentencia que establece la identidad de dichas variables o funciones, mientras que una definición se refiere a la descripción total de su
+funcionamiento o cuerpo. Para nuestros propósitos, las declaraciones y definiciones pueden estar juntas o separadas. En caso de que sean separadas,
+las declaraciones deben estar antes de las definiciones o inicializaciones. El programa debe tener una función principal llamada `main` que 
+no toma argumentos y retorna un tipo `integer`. Esta función sirve de punto de entrada para la ejecución del programa.
 
 ##Alcance
+
+BLAH soporta varios niveles de alcance. El alcance a nivel principal es el alcance global. Un nuevo bloque de alcance anidado se define con un par
+de llaves `{ }`. Cada función define un alcance local. Los alcances internos tapan los alcances más externos. Por ejemplo, una variable definida en
+una función tapa una variable con el mismo identificador en el alcance global.
+
+Las siguientes reglas se aplican para los identificadores:
+
+*   Al entrar a un nuevo alcance, todas las declaraciones en ese alcance
+son inmediatamente visibles.
+*   Los identificadores dentro de un nivel deben ser únicos (i.e. 
+no pueden haber dos funciones o variables del mismo nombre).
+*   Los identificadores redeclarados en un alcance anidado tapan las 
+declaraciones del nivel anterior.
+*   Declaraciones en el nivel global pueden ser accesadas en cualquier nivel
+al menos que sean tapadas por otro identificador.
+*   Todos los identificadores deben ser declarados.
+*   Para poder usar un identificador este debe ser declarado antes. No se
+permite definir funciones o acceder variables antes de ser declaradas.
+
 ##Tipos
+
+Los tipos base en BLAH son `integer, character, floating, character, 
+string` y `void`. BLAH soporta tipos nuevos para el caso de registros y uniones
+(la especificación está más adelante). Se pueden construir arreglos de cualquier
+tipo que no sea `void`. El tipo `string` es manejado como un arreglo de
+`character`.
+
 ##Variables
+
+Las variables pueden ser declaradas de cualquier tipo base, arreglo, registro o
+unión. Variables declaradas fuera de las funciones son de alcance global.
+Variables declaradas como parámetros formales o en el cuerpo de una función tienen alcance
+local.
+
 ##Arreglos
+
+Los arreglos de BLAH son colecciones homogéneas, indexadas linealmente. 
+
 ##Cadenas de Caracteres
+
+Los programas incluyen cadenas de caracteres constantes, comparar strings,
+imprimirlos, etc. Se planea añadir funciones que faciliten la manipulación de
+este tipo de datos. Las cadenas de caracteres están implementadas como arreglos
+de caracteres al estilo C/C++.
+
+*   La asignación de cadenas de caracteres es profunda/superficial.
+*   Las cadenas de caracteres pueden ser pasadas como parámetros y retornadas de 
+las funciones
+*   La comparación de strings (`==` y `!==`) es sensitiva a mayúsculas.
+
+EXPANDIR PROXIMAMENTE
+
 ##Funciones
+
+La declaración de una función incluye el nombre de la función, su tipo de
+retorno asociado asi como los parámetros formales.
+
+*   Las funciones son globales, no se permite la declaración anidada de
+funciones.
+*   Las funciones pueden tener cero o más parámetros formales.
+*   Los parámetros formales pueden ser de cualquier tipo base (excepto `void`), arreglos
+o definidos como registros o uniones.
+*   Los parámetros formales deben tener nombres distintos.
+*   Los parámetros formales tienen alcance local en la función, si otro bloque
+dentro de ésta es definido, variables dentro de ese bloque pueden tapar a los
+parámetros formales.
+*   Una función puede volver cualquier tipo base, arreglo, registro o unión.
+`void` es usado para indicar que la función no retorna ningún valor.
+*   Sobrecarga de funciones??
+*   Si una función retorna un tipo distinto a `void`, el valor retornado debe
+ser compatible con ese tipo.
+*   Si una función retorna `void` se puede usar la instrucción return sola.
+*   Funciones recursivas son permitidas.
+
 ##Invocacion de funciones
+
+Los parámetros y valores de retorno de las funciones de BLAH son pasados por
+valor/referencia?
+
+*   El número de argumentos pasados en la llamada de una función deben ser
+iguales a la cantidad de parámetros formales.
+*   El tipo de cada argumento debe ser igual al tipo de los parámetros formales.
+*   Los argumentos son evaluados de izquierda a derecha??
+*   Una función retorna el control de la ejecución al llamador cuando se ejecuta
+la instrucción return.
+*   La llamada de una función se evalúa como el tipo de dato que devuelve.
+
 ##Registros y Uniones
+
+
+
 ##Equivalencia de tipos y compatibilidad
+
+BLAH es un lenguaje fuertemente tipeado: un tipo específico es asociado a cada
+variable y la variable solo puede contener valores que se encuentren en el
+dominio de ese tipo. Si el tipo A es equivalente al B, ambas expresiones pueden
+ser substituidas en cualquier situación. Dos tipos bases son equivalente si y
+solo si son exactamente del mismo tipo. Dos arreglos son equivalentes si y solo
+si son del mismo tipo base. 
+
+Equivalencia estructural o por nombre?
+
+Compatibilidad.
+
 ##Asignación
+
+
+
 ##Estructuras de control
 ##Expresiones
 ##Funciones de libreria (I/O)
