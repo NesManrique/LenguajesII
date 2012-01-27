@@ -3,32 +3,43 @@
 #include <math.h>
 #define TOKEN(t) (yylval.token = t)
 #define SAVE_TOKEN yylval.string = new std::string(yytext, yyleng)
+char string_buf[MAX_STR_CONST];
+char *string_buf_ptr;
+
 %}
      
 DIGIT    [0-9]
-ID       [a-z][a-z0-9]*
+ID       [a-zA-Z][a-zA-Z0-9_]*
+DOUBLE	 {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 
 %x COMMENT
 %x STRING
+%x STRING2
 
 %%
 
 <INITIAL>{
     "/*"				BEGIN(COMMENT);
 	\"					BEGIN(STRING);
+	\'					BEGIN(STRING2);
 	"//[^\n]"			yylineno++;
 	{DIGIT}+			{yylval=atoi(yytext);return INT}
-	{DIGIT}.{DIGIT}+	{sscanf(yytext,"%lf",&yylval);return FLOAT}
+	{DOUBLE}			{sscanf(yytext,"%lf",&yylval);return FLOAT}
 
 	[(){},.!=<>%]		{return yytext[0];}
+
+	"is"				{return '=';}
 
 	"=="				{return EQUALS;}
 	"<="				{return LEQUALS;}
 	">="				{return GEQUALS;}
 	"!="				{return NOTEQUALS;}
 
+	"&&"				|
 	"and"				{return AND;}
+	"||"				|
 	"or"				{return OR;}
+	"^"					|
 	"xor"				{return XOR;}
 	"if"				{return IF;}
 	"then"				{return THEN;}
@@ -56,17 +67,23 @@ ID       [a-z][a-z0-9]*
 	"*"					|
 	"times"				{return '*';}
 
-	"integer"			{return TYPEINT;}
-	"float"				{return TYPEFLOAT;}
-	"string"			{return TYPESTRING;}
-	"character"			{return TYPECHAR;}
-	"boolean"			{return TYPEBOOL;}
-	
-	"register"			{return TYPEREG;}
+	"not"				{return '!';}
 
-	"function"			{return DECFUNC;}
 
+
+	"integer"			{return INT;}
+	"float"				{return FLOAT;}
+	"string"			{return STRING;}
+	"character"			{return CHAR;}
+	"boolean"			{return BOOL;}
+	"void"				{return VOID;}
 	
+	"register"			{return REG;}
+	"union"				{return UNION;}
+
+	"function"			{return FUNC;}
+
+	{ID}				{SAVE_TOKEN; return ID;}
 
 	\n				yylineno++;
 	[ \t]                  /* Ignore whitespace */
@@ -79,8 +96,7 @@ ID       [a-z][a-z0-9]*
 	\n        yylineno++;
 }
 
-		char string_buf[MAX_STR_CONST];
-		char *string_buf_ptr;
+
 
 <STRING>{
 	\"					{ /* saw closing quote - all done */
@@ -94,33 +110,42 @@ ID       [a-z][a-z0-9]*
 	\n					{/* error - unterminated string constant */
 						/* generate error message */
 						}
-				
-	\\[0-7]{1,3}		{/* octal escape sequence */
-							int result;
-							(void) sscanf( yytext + 1, "%o", &result );
-							if ( result > 0xff )
-								/* error, constant is out-of-bounds */
-								*string_buf_ptr++ = result;
-						}
-						
-	\\[0-9]+			{/* generate error - bad escape sequence; something
-						* like '\48' or '\0777777'
-						*/
-						}
+
 						
 	\\n					*string_buf_ptr++ = '\n';
+	\\v					*string_buf_ptr++ = '\v';
 	\\t					*string_buf_ptr++ = '\t';
 	\\r					*string_buf_ptr++ = '\r';
 	\\b					*string_buf_ptr++ = '\b';
 	\\f					*string_buf_ptr++ = '\f';
-	
-	\\(.|\n)			*string_buf_ptr++ = yytext[1];
-	
+	\\"					*string_buf_ptr++ = '"';
+
 	[^\\\n\"]+			{char *yptr = yytext;
 						while ( *yptr )
 							*string_buf_ptr++ = *yptr++;
 						}
-	
+}	 
+	\\"					*string_buf_ptr++ = '"';
+
+<STRING2>{
+	\'					{ /* saw closing quote - all done */
+							BEGIN(INITIAL);
+							*string_buf_ptr = '\0';
+							/* return string constant token type and
+							* value to parser
+							*/
+						}
+				
+	\n					{/* error - unterminated string constant */
+						/* generate error message */
+						}
+
+						
+
+	[^\']+			{char *yptr = yytext;
+						while ( *yptr )
+							*string_buf_ptr++ = *yptr++;
+						}
 }	 
 %%
      
