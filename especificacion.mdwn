@@ -112,7 +112,17 @@ local.
 
 ##Arreglos
 
-Los arreglos de BLAH son colecciones homogéneas, indexadas linealmente. 
+Los arreglos de BLAH son colecciones homogéneas, indexadas linealmente. Si se
+declara un arreglo de N elementos el primer elemento es el 0 y el N-esimo, puede
+ser accedido con el índice N-1 o con el índice -1. En otras palabras, es posible
+acceder a los elementos de un arreglo desde el último hasta el primero con
+números negativos, siendo el último el indexado con -1 y el primero el indexado
+con -N. Para ilustrar:
+
+    ejemplo is array of integers {a,b,c,d,e}
+
+El primer elemento `a` puede ser accedido como `ejemplo[0]` o como `ejemplo[-5]`
+y el elemento `e` puede ser accedido como `ejemplo[4]` o como `ejemplo[-1]`.
 
 ##Cadenas de Caracteres
 
@@ -144,7 +154,8 @@ dentro de ésta es definido, variables dentro de ese bloque pueden tapar a los
 parámetros formales.
 *   Una función puede volver cualquier tipo base, arreglo, registro o unión.
 `void` es usado para indicar que la función no retorna ningún valor.
-*   Sobrecarga de funciones??
+*   Sobrecarga de funciones no está permitida para los usuarios pero existen
+funciones sobrecargadas dentro del lenguaje.
 *   Si una función retorna un tipo distinto a `void`, el valor retornado debe
 ser compatible con ese tipo.
 *   Si una función retorna `void` se puede usar la instrucción return sola.
@@ -152,33 +163,36 @@ ser compatible con ese tipo.
 
 ##Invocacion de funciones
 
-Los parámetros y valores de retorno de las funciones de BLAH son pasados por
-valor/referencia?
+Los parámetros de BLAH son pasados por valor en el caso de los tipos básicos y
+por referencia en el caso de arreglos, registros y uniones. El valor de retorno
+se pasa por valor y en el caso de tipos compuestos esos "valores" son
+referencias.
 
 *   El número de argumentos pasados en la llamada de una función deben ser
 iguales a la cantidad de parámetros formales.
 *   El tipo de cada argumento debe ser igual al tipo de los parámetros formales.
-*   Los argumentos son evaluados de izquierda a derecha??
+*   Los argumentos son evaluados de derecha a izquierda.
 *   Una función retorna el control de la ejecución al llamador cuando se ejecuta
 la instrucción return.
 *   La llamada de una función se evalúa como el tipo de dato que devuelve.
 
 ##Registros y Uniones
 
-
+Los registros son un tipo compuesto y en BLAH deben ser declarados como tipo
+antes de poder ser usados como variables. La declaración de un registro o unión
+se hace de manera similar a C/C++.
 
 ##Equivalencia de tipos y compatibilidad
 
 BLAH es un lenguaje fuertemente tipeado: un tipo específico es asociado a cada
 variable y la variable solo puede contener valores que se encuentren en el
 dominio de ese tipo. Si el tipo A es equivalente al B, ambas expresiones pueden
-ser substituidas en cualquier situación. Dos tipos bases son equivalente si y
+ser sustituidas en cualquier situación. Dos tipos bases son equivalente si y
 solo si son exactamente del mismo tipo. Dos arreglos son equivalentes si y solo
 si son del mismo tipo base. 
 
-Equivalencia estructural o por nombre?
-
-Compatibilidad.
+La equivalencia de tipos en BLAH es por nombre, es decir dos variables son
+equivalentes si sus tipos poseen el mismo nombre.
 
 ##Asignación
 
