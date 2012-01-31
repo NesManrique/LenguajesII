@@ -121,6 +121,6 @@ class NUnionDeclaration : public NStatement{
 	public:
 		const NIdentifier& type;
 		VariableList fields;
-		NRegisterDeclaration(const NIdentifier& type, VariableList fields) : 
+		NUnionDeclaration(const NIdentifier& type, VariableList fields) : 
 			type(type), fields(fields){}
 };

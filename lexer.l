@@ -1,11 +1,15 @@
 %{
-#include "y.tab.h"
+#include "node.h"
+#include "parser.hpp"
 #include <math.h>
+#include <string>
 #define TOKEN(t) (yylval.token = t)
 #define SAVE_TOKEN yylval.string = new std::string(yytext, yyleng)
+#define MAX_STR_CONST 1024
+
 char string_buf[MAX_STR_CONST];
 char *string_buf_ptr;
-
+extern "C" int yywrap() { }
 %}
      
 DIGIT    [0-9]
@@ -23,24 +27,24 @@ DOUBLE	 {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 	\"					BEGIN(STRING);
 	\'					BEGIN(STRING2);
 	"//[^\n]"			yylineno++;
-	{DIGIT}+			{yylval=atoi(yytext);return INT}
-	{DOUBLE}			{sscanf(yytext,"%lf",&yylval);return FLOAT}
+	{DIGIT}+			{yylval.integer=atoi(yytext);return INT;}
+	{DOUBLE}			{sscanf(yytext,"%lf",&yylval.floating);return FLOAT;}
 
 	[(){},.!=<>%]		{return yytext[0];}
 
 	"is"				{return '=';}
 
-	"=="				{return EQUALS;}
-	"<="				{return LEQUALS;}
-	">="				{return GEQUALS;}
-	"!="				{return NOTEQUALS;}
+	"=="				{return EQ;}
+	"<="				{return LEQ;}
+	">="				{return GEQ;}
+	"!="				{return NEQ;}
+	"->"				{return ACCESS;}
 
 	"&&"				|
 	"and"				{return AND;}
 	"||"				|
 	"or"				{return OR;}
 	"^"					|
-	"xor"				{return XOR;}
 	"if"				{return IF;}
 	"then"				{return THEN;}
 	"else"				{return ELSE;}
@@ -81,7 +85,7 @@ DOUBLE	 {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 	"register"			{return REG;}
 	"union"				{return UNION;}
 
-	"function"			{return FUNC;}
+	"function"			{return FUN;}
 
 	{ID}				{SAVE_TOKEN; return ID;}
 
@@ -149,4 +153,3 @@ DOUBLE	 {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 }	 
 %%
      
-yywrap() { }
