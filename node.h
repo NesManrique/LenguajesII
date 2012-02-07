@@ -32,6 +32,18 @@ class NDouble : public NExpression {
 		NDouble(double value) : value(value) { }
 };
 
+class NBool : public NExpression {
+	public:
+		bool value;
+		NBool(bool value) : value(value) { }
+};
+
+class NChar : public NExpression {
+	public:
+		char value;
+		NChar(char value) : value(value) {}
+};
+
 class NIdentifier : public NExpression {
 	public:
 		std::string name;
@@ -69,6 +81,7 @@ class NBlock : public NExpression {
 		StatementList statements;
 		NBlock() { }
 };
+
 
 class NExpressionStatement : public NStatement {
 	public:

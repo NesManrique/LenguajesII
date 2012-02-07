@@ -1,14 +1,16 @@
 %{
-#include "node.h"
+#include "ast.h"
 #include "parser.hpp"
 #include <math.h>
 #include <string>
 #define TOKEN(t) (yylval.token = t)
 #define SAVE_TOKEN yylval.string = new std::string(yytext, yyleng)
+#define SAVE_STRING yylval.string = new std::string(string_buf,string_len)
 #define MAX_STR_CONST 1024
 
 char string_buf[MAX_STR_CONST];
 char *string_buf_ptr;
+int string_len;
 extern "C" int yywrap() { }
 %}
      
@@ -19,14 +21,15 @@ DOUBLE	 {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 %x COMMENT
 %x STRING
 %x STRING2
+%x COMMENTL
 
 %%
 
 <INITIAL>{
     "/*"				BEGIN(COMMENT);
-	\"					BEGIN(STRING);
-	\'					BEGIN(STRING2);
-	"//[^\n]"			yylineno++;
+	\"					{string_buf_ptr=string_buf;BEGIN(STRING);}
+	\'					{string_buf_ptr=string_buf;BEGIN(STRING2);}
+	"//"				BEGIN(COMMENTL);
 	{DIGIT}+			{yylval.integer=atoi(yytext);return INT;}
 	{DOUBLE}			{sscanf(yytext,"%lf",&yylval.floating);return FLOAT;}
 
@@ -51,13 +54,14 @@ DOUBLE	 {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 	"true"				{return TRUE;}
 	"false"				{return FALSE;}
 
-	"while"				{return FOR;}
+	"while"				{return WHILE;}
 	"do"				{return DO;}
 	"stop"				{return STOP;}
 	"next"				{return NEXT;}
 	
 	"for"				{return FOR;}
 	"from"				{return FROM;}
+	"in"				{return IN;}
 	"to"				{return TO;}
 	"return"			{return RETURN;}
 	
@@ -74,15 +78,15 @@ DOUBLE	 {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 	"not"				{return '!';}
 
 
-
+	/*
 	"integer"			{return INT;}
 	"float"				{return FLOAT;}
 	"string"			{return STRING;}
 	"character"			{return CHAR;}
 	"boolean"			{return BOOL;}
 	"void"				{return VOID;}
-	
-	"register"			{return REG;}
+*/	
+	"register"			{return REGISTER;}
 	"union"				{return UNION;}
 
 	"function"			{return FUN;}
@@ -90,7 +94,7 @@ DOUBLE	 {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 	{ID}				{SAVE_TOKEN; return ID;}
 
 	\n				yylineno++;
-	[ \t]                  /* Ignore whitespace */
+	[ \t]                /* Ignore whitespace */
 }
 
 <COMMENT>{
@@ -100,6 +104,10 @@ DOUBLE	 {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 	\n        yylineno++;
 }
 
+<COMMENTL>{
+	[^\n]+	
+	\n		{yylineno++;BEGIN(INITIAL);}
+}
 
 
 <STRING>{
@@ -109,6 +117,8 @@ DOUBLE	 {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 							/* return string constant token type and
 							* value to parser
 							*/
+							SAVE_STRING;
+							return STR;
 						}
 				
 	\n					{/* error - unterminated string constant */
@@ -129,7 +139,6 @@ DOUBLE	 {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 							*string_buf_ptr++ = *yptr++;
 						}
 }	 
-	\\"					*string_buf_ptr++ = '"';
 
 <STRING2>{
 	\'					{ /* saw closing quote - all done */
@@ -138,6 +147,9 @@ DOUBLE	 {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 							/* return string constant token type and
 							* value to parser
 							*/
+							SAVE_STRING;
+							return STR;
+							
 						}
 				
 	\n					{/* error - unterminated string constant */

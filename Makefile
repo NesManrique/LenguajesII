@@ -2,8 +2,8 @@ LEX    = flex
 BISON  = bison
 BFLAGS = --output=parser.cpp
 
-comp:	parser.cpp lexer.cpp main.cpp
-		g++ $^ node.h -o $@ -lm -ly
+comp:	parser.cpp lexer.cpp main.cpp ast.h
+		g++ $^ -o $@ -lm -ly
 
 parser.cpp:	parser.y
 		bison -o $@ -dy $^
