@@ -18,6 +18,9 @@ class NExpression : public Node {
 
 };
 
+class NLRExpression : public NExpression{
+};
+
 class NStatement : public Node {
 
 };
@@ -65,10 +68,24 @@ class NBool : public NExpression {
 		NBool(bool value) :value(value){}
 };
 
-class NIdentifier : public NExpression {
+class NIdentifier : public NLRExpression {
 	public:
 		std::string name;
 		NIdentifier(const std::string &name) : name(name){}
+};
+
+class NArrayAccess : public NLRExpression{
+	public:
+		const NLRExpression &lexpr;
+		NExpression &index;
+		NArrayAccess(const NLRExpression &lexpr, NExpression &index):lexpr(lexpr),index(index){}
+};
+
+class NStructAccess : public NLRExpression{
+	public:
+		const NLRExpression &lexpr;
+		NIdentifier &name;
+		NStructAccess(const NLRExpression &lexpr,NIdentifier &name):lexpr(lexpr),name(name){}
 };
 
 class NFunctionCall : public NExpression {
@@ -78,16 +95,6 @@ class NFunctionCall : public NExpression {
 		NFunctionCall(const NIdentifier &id, ExpressionList &arguments) : id(id), arguments(arguments){}
 };
 
-class NArrayAccess : public NExpression{
-	public:
-		const NIdentifier &id;
-		NExpression &index;
-		NArrayAccess(const NIdentifier &id, NExpression &index):id(id),index(index){}
-};
-
-/* ACCESS TO REGISTER FIELDS 
-class NREGACCESS
-*/
 
 class  NBinaryOperator : public NExpression {
 	public :
@@ -173,11 +180,24 @@ class NDoWhile : public NStatement{
 
 class NIf : public NStatement{
 	public:
-		NExpression* cond;
-		NStatement* block;
+		NExpression& cond;
+		NStatement& block;
 		NStatement* elseBlock;
-		NIf(NExpression* cond,NStatement* block):cond(cond),block(block){}
-		NIf(NExpression* cond,NStatement* block, NStatement* elseBlock):cond(cond),block(block),elseBlock(elseBlock){}
+		NIf(NExpression& cond,NStatement& block):cond(cond),block(block){}
+		NIf(NExpression& cond,NStatement& block, NStatement* elseBlock):cond(cond),block(block),elseBlock(elseBlock){}
+};
+
+
+class NFor : public NStatement{
+	public:
+		NIdentifier& id;
+		NExpression* beg;
+		NExpression* end;
+		NIdentifier* array;
+		NBlock& block;
+		NFor(NIdentifier& id,NExpression* beg,NExpression* end,NBlock& block): id(id),beg(beg),end(end),block(block){};
+		NFor(NIdentifier& id,NIdentifier* array,NBlock &block): id(id),array(array),block(block){};
+		
 };
 
 class NStop : public NStatement{
@@ -193,6 +213,14 @@ class NReturn : public NStatement{
 		NReturn(){}
 		NReturn(NExpression *expr):expr(expr){}
 		
+};
+
+class NAssignment : public NStatement{
+	public:
+		const NLRExpression* var;
+		NExpression* assig;
+		NAssignment (const NLRExpression * var, NExpression *assigment):var(var),assig(assigment){}
+
 };
 
 

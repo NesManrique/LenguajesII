@@ -33,7 +33,7 @@ DOUBLE	 {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 	{DIGIT}+			{yylval.integer=atoi(yytext);return INT;}
 	{DOUBLE}			{sscanf(yytext,"%lf",&yylval.floating);return FLOAT;}
 
-	[(){},.!=<>%]		{return yytext[0];}
+	[(){}\[\],.!=<>%]		{return yytext[0];}
 
 	"is"				{return '=';}
 

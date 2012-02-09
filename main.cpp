@@ -3,7 +3,6 @@
 #include "ast.h"
 extern int yyparse();
 
-program
 
 int main(int argc, char **argv)
 {

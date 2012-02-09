@@ -16,6 +16,7 @@ NBlock *ProgramAST;
 	NExpression *expr;
 	NStatement *stmt;
 	NIdentifier	*ident;
+	NLRExpression *lrexpr;
 	NVariableDeclaration *var_decl;
 	NArrayDeclaration *arr_decl;
 	NArrayAccess *arr_access;
@@ -44,13 +45,14 @@ NBlock *ProgramAST;
 %token	<string> ID
 
 /* Type of node our nonterminal represent */
-%type	<expr>	expr
+%type	<expr>	expr fun_call 
+%type 	<lrexpr>	lrexpr
 %type	<ident>	ident
 %type	<varvec> fun_decl_args var_decls fun_decl_args_list
 %type	<exprvec>	fun_call_args fun_call_args_lst /*array_elem*/
 %type	<block>	program stmts block decls 
-%type	<stmt>	stmt var_decl fun_decl reg_decl 
-%type	<stmt>	union_decl ctrl_while ctrl_if
+%type	<stmt>	stmt var_decl fun_decl reg_decl ctrl_for
+%type	<stmt>	union_decl ctrl_while ctrl_if var_asgn
 /*%type	<token>	comparison*/
 
 /* Matematical operators precedence */
@@ -103,16 +105,14 @@ fun_decl_args_list: var_decl {$$ = new VariableList();$$->push_back($<var_decl>1
 ident		: ID {$$ = new NIdentifier(*$1);}
 
 
-expr		: INT	{$$ = new NInteger($1);}	
+expr		: lrexpr{$$ = $<expr>1;} 
+			| INT	{$$ = new NInteger($1);}	
 			| FLOAT	{$$ = new NDouble($1);}
 			| STR 	{$$ = new NString(*$1);}
 			| CHAR	{$$ = new NChar($1);}	
 			| TRUE	{$$=new NBool(true);}
 			| FALSE	{$$=new NBool(false);}
-			| ident	{$$=new NIdentifier(*$1);}
-			| ident '[' expr ']' {$$=new NArrayAccess(*$1,*$3);}
-			| reg_access 	{}
-			| ident  fun_call_args  {$$ = new NFunctionCall(*$1,*$2);}
+			| fun_call  
 			| expr '+' expr {$$=new NBinaryOperator(*$1,$2,*$3);}
 			| expr '-' expr {$$=new NBinaryOperator(*$1,$2,*$3);}
 			| expr '/' expr {$$=new NBinaryOperator(*$1,$2,*$3);}
@@ -129,10 +129,12 @@ expr		: INT	{$$ = new NInteger($1);}
 			| '(' expr ')'	{$$=$2;}
 			;
 
-reg_access	:	ident ACCESS ident {}
-			|	reg_access ACCESS ident {}
-			;
 
+
+lrexpr		: ident	{$$=new NIdentifier(*$1);}
+			| lrexpr '[' expr ']' {$$=new NArrayAccess(*$1,*$3);}
+			| lrexpr ACCESS ident 	{$$=new NStructAccess(*$1,*$3);}
+			; 
 
 fun_call_args : '(' ')' {$$= new ExpressionList();}
 			| '(' fun_call_args_lst ')' {$$=$2;}
@@ -154,28 +156,30 @@ stmt		: ctrl_if
 			| ctrl_for	{}
 			| block 	{$$=$<stmt>1;}
 			| var_decl '.' 
-			| var_asgn '.' {}
-			| ident  fun_call_args  '.' {}
+			| var_asgn '.' 
+			| fun_call '.' {$$ = new NExpressionStatement(*$1);}
 			| RETURN '.' {$$ = new NReturn();}
 			| RETURN expr '.' {$$ = new NReturn($2);}
 			| STOP '.' {$$ = new NStop();}
 			| NEXT '.' {$$ = new NNext();}
 			;
 
-ctrl_if		: IF expr THEN block {$$ = new NIf($2,$4);}
-			| IF expr THEN block ELSE block {$$ = new NIf($2,$4,$6);}
-			| IF expr THEN block ELSE ctrl_if {$$ = new NIf($2,$4,$6);}
+fun_call	: ident fun_call_args {$$ = new NFunctionCall(*$1,*$2);}
+
+ctrl_if		: IF expr THEN block {$$ = new NIf(*$2,*$4);}
+			| IF expr THEN block ELSE block {$$ = new NIf(*$2,*$4,$6);}
+			| IF expr THEN block ELSE ctrl_if {$$ = new NIf(*$2,*$4,$6);}
 			;
 
 ctrl_while	: WHILE expr DO block {$$ = new NWhileDo($2,*$4);}
 			| DO block WHILE expr '.' {$$ = new NDoWhile($4,*$2);}
 			;
 
-ctrl_for	: FOR ID FROM expr TO expr block {}
-			| FOR ID IN ID block {}
+ctrl_for	: FOR ident FROM expr TO expr block {$$ = new NFor(*$2,$4,$6,*$7);}
+			| FOR ident IN ident block {$$ = new NFor(*$2,$4,*$5);}
 			;
 
-var_asgn	: ID IS expr {}
+var_asgn	: lrexpr '=' expr {$$ = new NAssignment($1,$3); }
 			;
 
 
