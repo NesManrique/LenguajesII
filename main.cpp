@@ -1,13 +1,25 @@
 #include <iostream>
 #include <cstdio>
+#include <vector>
 #include "ast.h"
-extern int yyparse();
+#include "symtable.h"
+#ifdef DEBUG
+extern int yydebug;
+#endif
 
+
+extern int yyparse();
+extern NBlock *ProgramAST;
+extern Symtable Table;
 
 int main(int argc, char **argv)
 {
+#ifdef DEBUG	
+		yydebug=1;
+#endif
 		freopen(argv[1],"r",stdin);
-	    yyparse();
-		
+	    yyparse();\
+		cout<<ProgramAST<<" "<<&Table<<" ";
+		cout<<ProgramAST->typeChk()<<endl;
 	    return 0;
 }

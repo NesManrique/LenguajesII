@@ -1,11 +1,12 @@
 %{
 #include "ast.h"
-#include <cstdio>
+#include "symtable.h"
+#include <stdio.h>
 extern int yylex (void);
 void yyerror (char const *a){printf("ERROR: %s\n",a);};
 
 NBlock *ProgramAST;
-
+extern Symtable Table;
 %}
 
 /* Ways to access data */
@@ -40,8 +41,8 @@ NBlock *ProgramAST;
 /*%token	<token> '=' '(' ')' '{' '}' ',' '.' '!' '<' '>' '%'
 %token	<token> '+' '-' '/' '*'*/
 %token 	<token> IF THEN ELSE FROM TO IN NEXT STOP
-%token	<token>	CHAR BOOL VOID REG UNION FUN TRUE FALSE
-%token 	<token> REGISTER DO WHILE RETURN IS FOR 
+%token	<token>	CHAR UNION FUN TRUE FALSE
+%token 	<token> REGISTER DO WHILE RETURN FOR 
 %token	<string> ID
 
 /* Type of node our nonterminal represent */
@@ -59,7 +60,7 @@ NBlock *ProgramAST;
 %nonassoc <token>	EQ NEQ GEQ LEQ '<' '>'	
 %left	<token>	'+' '-' AND OR
 %left	<token> '*' '/'
-%left 	<token> NEG NOT
+%left 	<token> NEG
 %left	<token> ACCESS
 
 %start program
@@ -143,8 +144,14 @@ fun_call_args : '(' ')' {$$= new ExpressionList();}
 fun_call_args_lst : expr {$$=new ExpressionList();$$->push_back($1);}
 			| fun_call_args_lst ',' expr {$$->push_back($3);}
 
-block		: '{' '}' {$$ = new NBlock();}
-			| '{' stmts '}' {$$ =$2;}
+block		: beg_block end_block {$$ = new NBlock();}
+			| beg_block stmts end_block {$$ =$2;}
+			;
+
+beg_block	: '{' {Table.begScope();}
+			;
+
+end_block	: '}' {Table.endScope();}
 			;
 
 stmts		: stmt  {$$ = new NBlock();$$->statements.push_back($1);}
@@ -182,31 +189,4 @@ ctrl_for	: FOR ident FROM expr TO expr block {$$ = new NFor(*$2,$4,$6,*$7);}
 var_asgn	: lrexpr '=' expr {$$ = new NAssignment($1,$3); }
 			;
 
-
-
-
-	
 %%
-
-
-
-
-/*
-comp		: EQ {}
-			| NEQ {}
-			| '<' {}
-			| '>' {}
-			| LEQ {}
-			| GEQ {}
-			;
-program : stmts {programBlock = $1;}
-
-stmts	: stmt {$$ = newBlock(); $$->statements.push_back($<stmt>1);}
-		| stmts stmt { $1 ->statements.push_back($<stmt>2);}
-		;
-
-stmt	: var_decl | func_decl | r
-
-block	: 
-*/
-
