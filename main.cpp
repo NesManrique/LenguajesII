@@ -20,10 +20,17 @@ int main(int argc, char **argv)
 		yydebug=1;
 #endif
 		freopen(argv[1],"r",stdin);
+        /*Table.lookupType("character");
+        Table.lookupType("integer");
+        Table.lookupType("float");
+        Table.lookupType("boolean");
+        Table.insert("sdasd",new TVar());
+        Table.insert("qweqwr",new TVar());
+        Table.insert("zxczxc",new TVar());
+        Table.insert("fghhf",new TVar());*/
 	    if(yyparse()==0)
-            cout << "Todo bien" << endl;
+            cout << "Parsing is over" << endl;
 		cout<<ProgramAST<<" "<<&Table<<" ";
-		cout<<ProgramAST->typeChk()<<endl;
-
+		cout<<ProgramAST->typeChk(Table)<<endl;
 	    return 0;
 }

@@ -1,5 +1,6 @@
 #include <vector>
 #include <iostream>
+#include "symtable.h"
 
 class NStatement;
 class NExpression;
@@ -12,7 +13,7 @@ typedef std::vector<NVariableDeclaration*> VariableList;
 
 class Node{
 	public:
-		virtual int typeChk(){}
+		virtual TType* typeChk(Symtable& t){return NULL;}
 		virtual ~Node() {}
 };
 
@@ -32,8 +33,8 @@ class NExpressionStatement : public NStatement {
 	public:
 		NExpression &expr;
 		NExpressionStatement(NExpression& expr):expr(expr){}
-		int typeChk(){
-			return expr.typeChk();
+		TType* typeChk(Symtable& t ){
+			return expr.typeChk(t);
 		}
 };
 
@@ -41,12 +42,18 @@ class NInteger : public NExpression {
 	public :
 		long long value;
 		NInteger(long long value) : value(value) {}
+		TType* typeChk(Symtable& t){
+			return (TType*)t.lookupType("integer");
+		}
 };
 
 class NDouble : public NExpression {
 	public :
 		double value;
 		NDouble(double value) : value(value) {}
+		TType* typeChk(Symtable& t){
+			return (TType*)t.lookupType("double");
+		}
 };
 
 class NString : public NExpression {
@@ -65,18 +72,29 @@ class NChar : public NExpression {
 	public :
 		char value;
 		NChar(char value) : value(value){}
+		TType* typeChk(Symtable& t){
+			return (TType*)t.lookupType("char");
+		}
 };
 
 class NBool : public NExpression {
 	public:
 		bool value;
 		NBool(bool value) :value(value){}
+		TType* typeChk(Symtable t){
+			return (TType*)t.lookupType("boolean");
+		}
 };
 
 class NIdentifier : public NLRExpression {
 	public:
 		std::string name;
+		TType* type;
 		NIdentifier(const std::string &name) : name(name){}
+		NIdentifier(const std::string &name,TType* type) : name(name),type(type){}
+		TType* typeChk(Symtable t){
+			return type;
+		}
 };
 
 class NArrayAccess : public NLRExpression{
@@ -98,28 +116,83 @@ class NFunctionCall : public NExpression {
 		const NIdentifier &id;
 		ExpressionList arguments;
 		NFunctionCall(const NIdentifier &id, ExpressionList &arguments) : id(id), arguments(arguments){}
+		TType* typeChk(Symtable &t){
+			for(int i=0;i<arguments.size();i++){
+				arguments[i]->typeChk(t);
+			}
+		}
 };
 
 
 class  NBinaryOperator : public NExpression {
 	public :
-		int op;
+		string op;
 		NExpression &lexp;
 		NExpression &rexp;
-		NBinaryOperator(NExpression& lexp,int op,NExpression& rexp):op(op),lexp(lexp),rexp(rexp){}
+		NBinaryOperator(NExpression& lexp,string op,NExpression& rexp):op(op),lexp(lexp),rexp(rexp){}
+		TType* typeChk(Symtable& t){
+			TType* t1=lexp.typeChk(t);
+			TType* t2=rexp.typeChk(t);
+			if(isalpha(op[0])){
+				if(t1->name=="boolean" && t2->name=="boolean"){
+					return t1;
+				}else{
+					fprintf(stderr,"%s expected a boolean types but received %s and %s\n",op.c_str(),t1->name.c_str(),t2->name.c_str());
+					/*should be NULL*/
+					return t1;
+				}
+			}else{
+				if(t1->numeric && t2->numeric){
+					if(t1->name=="float") return t1;
+					if(t2->name=="float") return t2;
+					return t1;
+				}else{
+					fprintf(stderr,"%s expected a numeric types but received %s and %s\n",op.c_str(),t1->name.c_str(),t2->name.c_str());
+
+					/*should be NULL*/
+					if(t1->name=="float") return t1;
+					if(t2->name=="float") return t2;
+					return t1;
+				}
+			}
+		}
 };
 
 class NUnaryOperator : public NExpression {
 	public :
-		int op;
+		string op;
 		NExpression &rexp;
-		NUnaryOperator(int op,NExpression& rexp):op(op),rexp(rexp){}
+		NUnaryOperator(string op,NExpression& rexp):op(op),rexp(rexp){}
+		TType* typeChk(Symtable& t){
+			TType* t2=rexp.typeChk(t);
+			if(isalpha(op[0])){
+				if(t2->name=="boolean"){
+					return t2;
+				}else{
+					fprintf(stderr,"%s expected a numeric type but received a %s\n",op.c_str(),t2->name.c_str());
+					return NULL;
+				}
+			}else{
+				if(t2->numeric){
+					return t2;
+				}else{
+					fprintf(stderr,"%s expected a boolean and received a %s\n",op.c_str(),t2->name.c_str());
+					return NULL;
+				}
+			}
+		}
 };
 
 class NBlock: public NStatement{
 	public :
 		StatementList statements;
-		NBlock() {}
+		NBlock() {};
+		TType* typeChk(Symtable &t){
+			for(int i=0;i<statements.size();i++){
+				statements[i]->typeChk(t);
+			}
+            return NULL;
+		}
 };
 
 
@@ -128,9 +201,20 @@ class NVariableDeclaration : public NStatement {
 		const NIdentifier& type;
 		NIdentifier& id;
 		NExpression *assigment;
-		NVariableDeclaration(const NIdentifier& type, NIdentifier& id):type(type),id(id){}
+		NVariableDeclaration(const NIdentifier& type, NIdentifier& id):type(type),id(id),assigment(NULL){}
 		NVariableDeclaration(const NIdentifier& type,NIdentifier& id,NExpression* assignment):type(type),id(id),assigment(assigment){}
-		int typeChk(){
+		TType* typeChk(Symtable &t){
+			TType* t1 = t.lookupType(type.name);
+			if(assigment!=NULL){
+				TType* t2 = assigment->typeChk(t);
+                cout << t1->name << " " << t2->name << endl;
+				if (t1->name!=t1->name){
+					fprintf(stderr,"%s declared as %s but inicialized with %s\n",id.name.c_str(),t1->name.c_str(),t2->name.c_str());
+					//return error
+				}
+				
+			}
+			return t1;
 		}
 };
 
@@ -141,6 +225,13 @@ class NFunctionDeclaration : public NStatement {
 		VariableList args;
 		NBlock &block;
 		NFunctionDeclaration(const NIdentifier& type,const NIdentifier& id,const VariableList& args, NBlock block):type(type),id(id),args(args),block(block){}
+		TType* typeChk(Symtable &t){
+			for(int i=0;i<args.size();i++){
+				args[i]->typeChk(t);
+			}
+			return block.typeChk(t);
+		}
+			
 };
 
 class NArrayDeclaration : public NStatement{
@@ -173,6 +264,10 @@ class NWhileDo : public NStatement{
 		NExpression* cond;
 		NBlock& block;
 		NWhileDo(NExpression* cond, NBlock& block):cond(cond),block(block){}
+		TType* typeChk(Symtable &t){
+			cond->typeChk(t);	
+			return block.typeChk(t);
+		}
 };
 
 class NDoWhile : public NStatement{
@@ -180,6 +275,10 @@ class NDoWhile : public NStatement{
 		NExpression* cond;
 		NBlock& block;
 		NDoWhile(NExpression* cond, NBlock& block):cond(cond),block(block){}
+		TType* typeChk(Symtable &t){
+			cond->typeChk(t);	
+			return block.typeChk(t);
+		}
 };
 
 class NIf : public NStatement{
@@ -189,6 +288,11 @@ class NIf : public NStatement{
 		NStatement* elseBlock;
 		NIf(NExpression& cond,NStatement& block):cond(cond),block(block){}
 		NIf(NExpression& cond,NStatement& block, NStatement* elseBlock):cond(cond),block(block),elseBlock(elseBlock){}
+		TType* typeChk(Symtable &t){
+			cond.typeChk(t);
+			if(elseBlock!=NULL) elseBlock->typeChk(t);
+			return block.typeChk(t);
+		}
 };
 
 

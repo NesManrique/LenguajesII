@@ -4,7 +4,10 @@ character d is #$.
 boolean b is true.
 float a is 5.6.
 
-union Un {boolean a, character b, integer c}
+integer s is 5.
+character e is s.
+
+/*union Un {boolean a, character b, integer c}
 
 register Reg {boolean a, character b, integer c}
 
@@ -12,7 +15,7 @@ float function suma(integer a,integer b=1){
 	a[2]->elsa[3] is a->x.
 	integer c is a+b.
 	return c.
-}
+}*/
 
 //union Un {	boolean a,	character b,	integer c,	float d}
 
@@ -25,7 +28,7 @@ que puede abarcar muchas lineas
 asdf while for true
 asdf  */
 
-void function  main(){
+/*void function  main(){
 	integer a is (2).
 //	float b is 2.1.
 
@@ -46,4 +49,4 @@ void function  main(){
 
 	return.
 
-}
+}*/

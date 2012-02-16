@@ -1,23 +1,27 @@
+
+#ifndef SYMTABLE
+#include <cstdio>
 #include <hash_map>
 #include <iostream>
 #include <string>
 #include <cmath>
 #include <list>
 
+
 using namespace __gnu_cxx;
 using namespace std;
 
 class tuple{
     public:
-         const string &id;
-         const int scope;
-    tuple(const string &id,const int scope):id(id),scope(scope){}
+         string id;
+         int scope;
+    tuple(string id,int scope):id(id),scope(scope){}
     bool operator==(const tuple a) const{
         return id==a.id && scope==a.scope;
     }
-	tuple operator=(const tuple& a){
+	/*tuple operator=(const tuple& a){
 		return tuple(a.id,a.scope);
-	}
+	}*/
 	
 };
 
@@ -28,9 +32,11 @@ class TElement {
 
 class TType: public TElement {
 	public:
+		const string name;
 		const unsigned long size;
 		const bool basic;
-		TType(unsigned long size,bool basic):size(size),basic(basic){};
+		const bool numeric;
+		TType(string name,unsigned long size,bool basic=false,bool numeric=false):name(name),size(size),basic(basic),numeric(numeric){};
 };
 
 class Field{
@@ -43,14 +49,14 @@ class Field{
 class TRegister: public TType{
 	public:
 		std::vector<Field*> fields;
-		TRegister(unsigned long size,std::vector<Field*> fields):TType(size,false),fields(fields){}
+		TRegister(string name,unsigned long size,std::vector<Field*> fields):TType(name,size),fields(fields){}
 
 };
 
 class TUnion: public TType{
 	public:
 		std::vector<Field*> fields;
-		TUnion(unsigned long size,std::vector<Field*> fields):TType(size,false),fields(fields){}
+		TUnion(string name,unsigned long size,std::vector<Field*> fields):TType(name,size),fields(fields){}
 
 };
 
@@ -58,7 +64,7 @@ class TUnion: public TType{
 class TVar: public TElement{
 	public:
 		const TType& type;
-		TVar(const TType type):type(type){}
+		TVar(const TType& type):type(type){}
 };
 
 class TFunc: public TElement{
@@ -122,14 +128,14 @@ class Symtable {
 	hash_map<tuple,TElement*> table;
 	list<int> scopeStack;
 	int scope;
-    int nextscope;
+	int nextscope;
 	public:
-		Symtable():scope(0){
-			table[tuple(string("char"),scope)]=new TType(sizeof(char),true);
-			table[tuple(string("integer"),scope)]=new TType(sizeof(int),true);
-			table[tuple(string("float"),scope)]=new TType(sizeof(float),true);
-			table[tuple(string("float"),scope)]=new TType(sizeof(bool),true);
-
+		Symtable():scope(0),nextscope(1){
+			table[tuple(string("char"),scope)]=new TType("char",sizeof(char),true,true);
+			table[tuple(string("integer"),scope)]=new TType("integer",sizeof(int),true,true);
+			table[tuple(string("float"),scope)]=new TType("float",sizeof(float),true,true);
+			table[tuple(string("boolean"),scope)]=new TType("boolean",sizeof(bool),true);
+			table[tuple(string("ezequiel"),scope)]=new TType("boolean",sizeof(bool),true);
 		}
 		
 		
@@ -163,14 +169,20 @@ class Symtable {
         
         TType* lookupType(string name){
             tuple t(name,0);
+            cout << t.id << "extra" << endl;
             hash_map<tuple,TElement*>::iterator it;
             it=table.find(t);
             if(it==table.end()){
                 return NULL;
             }
-            return (TType *)it->second;
+
+            cout << it->second << endl;
+
+            return (TType *)(it->second);
         }
 
         int begScope(){scopeStack.push_front(scope);scope=nextscope;nextscope++;}
         int endScope(){scope=scopeStack.front();scopeStack.pop_front();}
 };
+#define SYMTABLE
+#endif
