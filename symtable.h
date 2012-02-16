@@ -24,8 +24,6 @@ class tuple{
 	
 };
 
-
-
 class TElement {
 	public:
 		virtual ~TElement(){};
