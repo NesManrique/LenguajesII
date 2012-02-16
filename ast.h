@@ -1,5 +1,6 @@
 #include <vector>
 #include <iostream>
+#include "symtable.h"
 
 class NStatement;
 class NExpression;
@@ -12,7 +13,7 @@ typedef std::vector<NVariableDeclaration*> VariableList;
 
 class Node{
 	public:
-		virtual int typeChk(){}
+		virtual TType* typeChk(Symtable& t){}
 		virtual ~Node() {}
 };
 
@@ -32,8 +33,8 @@ class NExpressionStatement : public NStatement {
 	public:
 		NExpression &expr;
 		NExpressionStatement(NExpression& expr):expr(expr){}
-		int typeChk(){
-			return expr.typeChk();
+		TType* typeChk(Symtable& t ){
+			return expr.typeChk(t);
 		}
 };
 
@@ -41,12 +42,18 @@ class NInteger : public NExpression {
 	public :
 		long long value;
 		NInteger(long long value) : value(value) {}
+		TType* typeChk(Symtable& t){
+			return (TType*)t.lookup("integer");
+		}
 };
 
 class NDouble : public NExpression {
 	public :
 		double value;
 		NDouble(double value) : value(value) {}
+		TType* typeChk(Symtable& t){
+			return (TType*)t.lookup("double");
+		}
 };
 
 class NString : public NExpression {
@@ -65,18 +72,26 @@ class NChar : public NExpression {
 	public :
 		char value;
 		NChar(char value) : value(value){}
+		TType* typeChk(Symtable& t){
+			return (TType*)t.lookup("char");
+		}
 };
 
 class NBool : public NExpression {
 	public:
 		bool value;
 		NBool(bool value) :value(value){}
+		TType* typeChk(Symtable t){
+			return (TType*)t.lookup("boolean");
+		}
 };
 
 class NIdentifier : public NLRExpression {
 	public:
 		std::string name;
+		TType* type;
 		NIdentifier(const std::string &name) : name(name){}
+		NIdentifier(const std::string &name,TType* type) : name(name),type(type){}
 };
 
 class NArrayAccess : public NLRExpression{
@@ -107,6 +122,10 @@ class  NBinaryOperator : public NExpression {
 		NExpression &lexp;
 		NExpression &rexp;
 		NBinaryOperator(NExpression& lexp,int op,NExpression& rexp):op(op),lexp(lexp),rexp(rexp){}
+		TType* typeChk(Symtable& t){
+			TType* t1=lexp.typeChk(t);
+			TType* t2=rexp.typeChk(t);
+		}
 };
 
 class NUnaryOperator : public NExpression {

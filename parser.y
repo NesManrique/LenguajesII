@@ -6,7 +6,7 @@ extern int yylex (void);
 void yyerror (char const *a){printf("ERROR: %s\n",a);};
 
 NBlock *ProgramAST;
-extern Symtable Table;
+Symtable Table;
 %}
 
 /* Ways to access data */

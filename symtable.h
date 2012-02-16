@@ -1,8 +1,11 @@
+
+#ifndef SYMTABLE
 #include <hash_map>
 #include <iostream>
 #include <string>
 #include <cmath>
 #include <list>
+
 
 using namespace __gnu_cxx;
 using namespace std;
@@ -32,7 +35,8 @@ class TType: public TElement {
 	public:
 		const unsigned long size;
 		const bool basic;
-		TType(unsigned long size,bool basic):size(size),basic(basic){};
+		const bool numeric;
+		TType(unsigned long size,bool basic,bool numeric=false):size(size),basic(basic),numeric(numeric){};
 };
 
 class Field{
@@ -124,11 +128,12 @@ class Symtable {
 	hash_map<tuple,TElement*> table;
 	list<int> scopeStack;
 	int scope;
+	int nextscope;
 	public:
-		Symtable():scope(0){
-			table[tuple(string("char"),scope)]=new TType(sizeof(char),true);
-			table[tuple(string("integer"),scope)]=new TType(sizeof(int),true);
-			table[tuple(string("float"),scope)]=new TType(sizeof(float),true);
+		Symtable():scope(0),nextscope(1){
+			table[tuple(string("char"),scope)]=new TType(sizeof(char),true,true);
+			table[tuple(string("integer"),scope)]=new TType(sizeof(int),true,true);
+			table[tuple(string("float"),scope)]=new TType(sizeof(float),true,true);
 			table[tuple(string("boolean"),scope)]=new TType(sizeof(bool),true);
 		}
 		
@@ -155,8 +160,8 @@ class Symtable {
 			}
 			return it->second;
 		}
-		int begScope(){scopeStack.push_front(scope);scope++;}
-		int endScope(){scopeStack.pop_front();}
+		int begScope(){scopeStack.push_front(scope);scope=nextscope;nextscope++;}
+		int endScope(){scope=scopeStack.front();scopeStack.pop_front();}
 };
-
-Symtable Table;
+#define SYMTABLE
+#endif

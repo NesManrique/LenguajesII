@@ -20,6 +20,6 @@ int main(int argc, char **argv)
 		freopen(argv[1],"r",stdin);
 	    yyparse();\
 		cout<<ProgramAST<<" "<<&Table<<" ";
-		cout<<ProgramAST->typeChk()<<endl;
+		cout<<ProgramAST->typeChk(Table)<<endl;
 	    return 0;
 }
