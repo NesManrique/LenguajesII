@@ -18,9 +18,9 @@ integer a.
 float b.
 
 // integer es un cometario asodifaeoi de una linea
-/* esto es un cometario de block
+/* esto es un cometario de bloque
 que puede abarcar muchas lineas
-asdf
+asdf while for true
 asdf  */
 
 void function  main(){

@@ -27,6 +27,7 @@ DOUBLE	 {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 %x STRING
 %x STRING2
 %x COMMENTL
+%x CHARC
 
 %%
 
@@ -35,8 +36,22 @@ DOUBLE	 {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 	\"					{string_buf_ptr=string_buf;BEGIN(STRING);}
 	\'					{string_buf_ptr=string_buf;BEGIN(STRING2);}
 	"//"				BEGIN(COMMENTL);
-	{DIGIT}+			{yylval.integer=atoi(yytext);return INT;}
-	{DOUBLE}			{sscanf(yytext,"%lf",&yylval.floating);return FLOAT;}
+    "#"                 BEGIN(CHARC);
+
+	{DIGIT}+			{if((yylval.integer=strtol(yytext,NULL,0))<=-2147483648){
+                            fprintf(stderr,"Warning: Underflow detected in line %d\n", yylineno);
+                         }else if((yylval.integer=strtol(yytext,NULL,0))>=2147483647){
+                                fprintf(stderr,"Warning: Overflow detected in line %d\n",yylineno);}
+                        return INT;}
+
+	{DOUBLE}			{   errno=0;
+                            if((yylval.floating=strtod(yytext,NULL))==HUGE_VAL){
+                                perror("Warning floating point number cause overflow\n");
+                            }else if((yylval.floating=strtod(yytext,NULL))==0 && 
+                             errno==ERANGE){
+                                perror("Warning floating point number cause underflow\n");
+                            }
+                         return FLOAT;}
 
 	[(){}\[\],.!=<>%]		{return yytext[0];}
 
@@ -171,6 +186,23 @@ DOUBLE	 {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 						while ( *yptr )
 							*string_buf_ptr++ = *yptr++;
 						}
-}	 
+}
+
+<CHARC>{
+
+    \n                  {printf("Unterminated string\n");
+                            yycolumn = 1;}
+
+    \\n					yylval.Char = '\n';
+	\\v					yylval.Char = '\v';
+	\\t					yylval.Char = '\t';
+	\\r					yylval.Char = '\r';
+	\\b					yylval.Char = '\b';
+	\\f					yylval.Char = '\f';
+    \\s                 yylval.Char = ' ';
+
+    .                   yylval.Char = yytext[0];
+}
+ 
 %%
      

@@ -9,8 +9,10 @@ typedef std::vector<NStatement*> StatementList;
 typedef std::vector<NExpression*> ExpressionList;
 typedef std::vector<NVariableDeclaration*> VariableList;
 
+
 class Node{
 	public:
+		virtual int typeChk(){}
 		virtual ~Node() {}
 };
 
@@ -30,6 +32,9 @@ class NExpressionStatement : public NStatement {
 	public:
 		NExpression &expr;
 		NExpressionStatement(NExpression& expr):expr(expr){}
+		int typeChk(){
+			return expr.typeChk();
+		}
 };
 
 class NInteger : public NExpression {
@@ -125,7 +130,8 @@ class NVariableDeclaration : public NStatement {
 		NExpression *assigment;
 		NVariableDeclaration(const NIdentifier& type, NIdentifier& id):type(type),id(id){}
 		NVariableDeclaration(const NIdentifier& type,NIdentifier& id,NExpression* assignment):type(type),id(id),assigment(assigment){}
-
+		int typeChk(){
+		}
 };
 
 class NFunctionDeclaration : public NStatement {
@@ -151,16 +157,14 @@ class NRegisterDeclaration : public NStatement{
 	public:
 		const NIdentifier& type;
 		VariableList fields;
-		NRegisterDeclaration(const NIdentifier& type, VariableList fields) : 
-			type(type), fields(fields){}
+		NRegisterDeclaration(const NIdentifier& type, VariableList fields) :type(type), fields(fields){}
 };
 
 class NUnionDeclaration : public NStatement{
 	public:
 		const NIdentifier& type;
 		VariableList fields;
-		NUnionDeclaration(const NIdentifier& type, VariableList fields) : 
-			type(type), fields(fields){}
+		NUnionDeclaration(const NIdentifier& type, VariableList fields) : type(type), fields(fields){}
 };
 
 
@@ -222,8 +226,3 @@ class NAssignment : public NStatement{
 		NAssignment (const NLRExpression * var, NExpression *assigment):var(var),assig(assigment){}
 
 };
-
-
-
-
-

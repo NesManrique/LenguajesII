@@ -2,6 +2,8 @@
 #include "ast.h"
 #include <cstdio>
 #include <cstdarg>
+#include "symtable.h"
+#include <stdio.h>
 extern int yylex (void);
 //void yyerror (char const *a){printf("ERROR: %s\n",a);};
 
@@ -10,6 +12,7 @@ void yyerror(char const *s, ...);
 NBlock *ProgramAST;
 int flagerror;
 int flagfdecl=1;
+Symtable Table;
 %}
 
 /* Ways to access data */
@@ -46,8 +49,8 @@ int flagfdecl=1;
 /*%token	<token> '=' '(' ')' '{' '}' ',' '.' '!' '<' '>' '%'
 %token	<token> '+' '-' '/' '*'*/
 %token 	<token> IF THEN ELSE FROM TO IN NEXT STOP
-%token	<token>	CHAR BOOL VOID REG UNION FUN TRUE FALSE
-%token 	<token> REGISTER DO WHILE RETURN IS FOR 
+%token	<token>	CHAR UNION FUN TRUE FALSE
+%token 	<token> REGISTER DO WHILE RETURN FOR 
 %token	<string> ID
 
 /* Type of node our nonterminal represent */
@@ -65,7 +68,7 @@ int flagfdecl=1;
 %nonassoc <token>	EQ NEQ GEQ LEQ '<' '>'	
 %left	<token>	'+' '-' AND OR
 %left	<token> '*' '/'
-%left 	<token> NEG NOT
+%left 	<token> NEG
 %left	<token> ACCESS
 
 %locations
@@ -152,10 +155,10 @@ ident		: ID {$$ = new NIdentifier(*$1);}
 
 
 expr		: lrexpr{$$ = $<expr>1;} 
-			| INT	{$$ = new NInteger($1);}	
-			| FLOAT	{$$ = new NDouble($1);}
-			| STR 	{$$ = new NString(*$1);}
-			| CHAR	{$$ = new NChar($1);}	
+			| INT	{$$ = new NInteger($1);printf("%lld\n",$1);}	
+			| FLOAT	{$$ = new NDouble($1);printf("%f\n",$1);}
+			| STR 	{$$ = new NString(*$1);printf("%s\n",$1->c_str());}
+			| CHAR	{$$ = new NChar($1);printf("%c\n",$1);}	
 			| TRUE	{$$=new NBool(true);}
 			| FALSE	{$$=new NBool(false);}
 			| fun_call  
@@ -183,8 +186,6 @@ expr		: lrexpr{$$ = $<expr>1;}
                             }*/
 			;
 
-
-
 lrexpr		: ident	{$$=new NIdentifier(*$1);}
 			| lrexpr '[' expr ']' {$$=new NArrayAccess(*$1,*$3);}
 			| lrexpr ACCESS ident 	{$$=new NStructAccess(*$1,*$3);}
@@ -200,9 +201,14 @@ fun_call_args_lst : expr {$$=new ExpressionList();$$->push_back($1);}
             | fun_call_args_lst error expr {}
             ;
 
-block		: '{' '}' {$$ = new NBlock();}
-			| '{' stmts '}' {$$ =$2;}
-            | error '}' {}
+block		: beg_block end_block {$$ = new NBlock();}
+			| beg_block stmts end_block {$$ =$2;}
+			;
+
+beg_block	: '{' {Table.begScope();}
+			;
+
+end_block	: '}' {Table.endScope();}
 			;
 
 stmts		: stmt  {$$ = new NBlock();$$->statements.push_back($1);}
@@ -247,7 +253,6 @@ var_asgn	: lrexpr '=' expr {$$ = new NAssignment($1,$3); }
             | error '=' {}
 			;
 
-	
 %%
 
 /* in code section at the end of the parser */
