@@ -207,7 +207,6 @@ class NVariableDeclaration : public NStatement {
 			TType* t1 = t.lookupType(type.name);
 			if(assigment!=NULL){
 				TType* t2 = assigment->typeChk(t);
-                cout << t1->name << " " << t2->name << endl;
 				if (t1->name!=t1->name){
 					fprintf(stderr,"%s declared as %s but inicialized with %s\n",id.name.c_str(),t1->name.c_str(),t2->name.c_str());
 					//return error

@@ -30,7 +30,8 @@ int main(int argc, char **argv)
         Table.insert("fghhf",new TVar());*/
 	    if(yyparse()==0)
             cout << "Parsing is over" << endl;
-		cout<<ProgramAST<<" "<<&Table<<" ";
-		cout<<ProgramAST->typeChk(Table)<<endl;
+        cout << "Beginning Type Check" << endl;
+		ProgramAST->typeChk(Table);
+        cout << "Type Check Finished" << endl;
 	    return 0;
 }

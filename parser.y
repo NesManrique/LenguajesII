@@ -103,19 +103,13 @@ decl		: var_decl '.'
 
 var_decl	: ident ident {
                             TElement * t;
-                            cout << $1 << endl;
-                            cout << $2 << endl;$$ = new NVariableDeclaration(*$1,*$2);
-                            cout << $1->name << endl;
-                            cout << $2->name << endl;
+                            $$ = new NVariableDeclaration(*$1,*$2);
                             if((t=Table.lookupType($1->name))!=NULL){
                                 Table.insert($2->name,new TVar(*((TType *)t)));
                              }
                           }
 			| ident ident '=' expr {$$ = new NVariableDeclaration(*$1,*$2,$4);
-                                    TElement * t;cout << $1 << endl;
-                            cout << $2 << endl;
-                            cout << $1->name << "ini" << endl;
-                            cout << $2->name << "ini" << endl;
+                                    TElement * t;
                                     if((t=Table.lookupType($1->name))!=NULL){
                                         Table.insert($2->name,
                                         new TVar(*((TType *)t)));}}

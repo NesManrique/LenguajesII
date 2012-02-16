@@ -169,14 +169,11 @@ class Symtable {
         
         TType* lookupType(string name){
             tuple t(name,0);
-            cout << t.id << "extra" << endl;
             hash_map<tuple,TElement*>::iterator it;
             it=table.find(t);
             if(it==table.end()){
                 return NULL;
             }
-
-            cout << it->second << endl;
 
             return (TType *)(it->second);
         }
