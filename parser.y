@@ -10,11 +10,8 @@ extern int yylex (void);
 void yyerror(char const *s, ...);
 
 NBlock *ProgramAST;
-<<<<<<< HEAD
-=======
 int flagerror;
 int flagfdecl=1;
->>>>>>> ff3b506b1c55e23ea5c6d07da4b59a4bc756166a
 Symtable Table;
 %}
 
@@ -71,7 +68,7 @@ Symtable Table;
 %nonassoc <token>	EQ NEQ GEQ LEQ '<' '>'	
 %left	<token>	'+' '-' AND OR
 %left	<token> '*' '/'
-%left 	<token> NEG
+%left 	<token> NEG NOT
 %left	<token> ACCESS
 
 %locations
@@ -158,26 +155,27 @@ ident		: ID {$$ = new NIdentifier(*$1);}
 
 
 expr		: lrexpr{$$ = $<expr>1;} 
-			| INT	{$$ = new NInteger($1);printf("%lld\n",$1);}	
-			| FLOAT	{$$ = new NDouble($1);printf("%f\n",$1);}
-			| STR 	{$$ = new NString(*$1);printf("%s\n",$1->c_str());}
-			| CHAR	{$$ = new NChar($1);printf("%c\n",$1);}	
+			| INT	{$$ = new NInteger($1);}	
+			| FLOAT	{$$ = new NDouble($1);}
+			| STR 	{$$ = new NString(*$1);}
+			| CHAR	{$$ = new NChar($1);}	
 			| TRUE	{$$=new NBool(true);}
 			| FALSE	{$$=new NBool(false);}
 			| fun_call  
-			| expr '+' expr {$$=new NBinaryOperator(*$1,$2,*$3);}
-			| expr '-' expr {$$=new NBinaryOperator(*$1,$2,*$3);}
-			| expr '/' expr {$$=new NBinaryOperator(*$1,$2,*$3);}
-			| expr '*' expr {$$=new NBinaryOperator(*$1,$2,*$3);}
-			| expr AND expr {$$=new NBinaryOperator(*$1,$2,*$3);}
-			| expr OR expr	{$$=new NBinaryOperator(*$1,$2,*$3);}
-			| expr '<' expr {$$=new NBinaryOperator(*$1,$2,*$3);}
-			| expr '>' expr {$$=new NBinaryOperator(*$1,$2,*$3);}
-			| expr GEQ expr {$$=new NBinaryOperator(*$1,$2,*$3);}
-			| expr LEQ expr {$$=new NBinaryOperator(*$1,$2,*$3);}
-			| expr NEQ expr {$$=new NBinaryOperator(*$1,$2,*$3);}
-			| expr EQ expr {$$=new NBinaryOperator(*$1,$2,*$3);}
-			| '-' expr %prec NEG {$$=new NUnaryOperator($1,*$2);}
+			| expr '+' expr {$$=new NBinaryOperator(*$1,"+",*$3);}
+			| expr '-' expr {$$=new NBinaryOperator(*$1,"-",*$3);}
+			| expr '/' expr {$$=new NBinaryOperator(*$1,"/",*$3);}
+			| expr '*' expr {$$=new NBinaryOperator(*$1,"*",*$3);}
+			| expr AND expr {$$=new NBinaryOperator(*$1,"and",*$3);}
+			| expr OR expr	{$$=new NBinaryOperator(*$1,"or",*$3);}
+			| expr '<' expr {$$=new NBinaryOperator(*$1,"<",*$3);}
+			| expr '>' expr {$$=new NBinaryOperator(*$1,">",*$3);}
+			| expr GEQ expr {$$=new NBinaryOperator(*$1,">=",*$3);}
+			| expr LEQ expr {$$=new NBinaryOperator(*$1,"<=",*$3);}
+			| expr NEQ expr {$$=new NBinaryOperator(*$1,"!=",*$3);}
+			| expr EQ expr {$$=new NBinaryOperator(*$1,"==",*$3);}
+			| '-' expr %prec NEG {$$=new NUnaryOperator("-",*$2);}
+			| '!' expr %prec NOT {$$=new NUnaryOperator("not",*$2);}
 			| '(' expr ')'	{$$=$2;}
             /*| error ')' {@$.first_column = @1.first_column;
                             @$.first_line = @1.first_line;
@@ -189,7 +187,13 @@ expr		: lrexpr{$$ = $<expr>1;}
                             }*/
 			;
 
-lrexpr		: ident	{$$=new NIdentifier(*$1);}
+lrexpr		: ident	{ if(Table.lookup($1->name)!=NULL){
+							$$=new NIdentifier(*$1);
+						}else{
+							fprintf(stderr,"var %s is not declared.\n",$1->name.c_str());
+						}
+					}
+
 			| lrexpr '[' expr ']' {$$=new NArrayAccess(*$1,*$3);}
 			| lrexpr ACCESS ident 	{$$=new NStructAccess(*$1,*$3);}
             /*| error ']' {}*/
@@ -225,7 +229,7 @@ stmts		: stmt  {$$ = new NBlock();$$->statements.push_back($1);}
 
 stmt		: ctrl_if 	
 			| ctrl_while 
-			| ctrl_for	{}
+			| ctrl_for	
 			| block 	{$$=$<stmt>1;}
 			| var_decl '.' 
 			| var_asgn '.' 

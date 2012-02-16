@@ -1,5 +1,6 @@
 
 #ifndef SYMTABLE
+#include <cstdio>
 #include <hash_map>
 #include <iostream>
 #include <string>
@@ -31,10 +32,11 @@ class TElement {
 
 class TType: public TElement {
 	public:
+		const string name;
 		const unsigned long size;
 		const bool basic;
 		const bool numeric;
-		TType(unsigned long size,bool basic,bool numeric=false):size(size),basic(basic),numeric(numeric){};
+		TType(string name,unsigned long size,bool basic=false,bool numeric=false):name(name),size(size),basic(basic),numeric(numeric){};
 };
 
 class Field{
@@ -47,14 +49,14 @@ class Field{
 class TRegister: public TType{
 	public:
 		std::vector<Field*> fields;
-		TRegister(unsigned long size,std::vector<Field*> fields):TType(size,false),fields(fields){}
+		TRegister(string name,unsigned long size,std::vector<Field*> fields):TType(name,size),fields(fields){}
 
 };
 
 class TUnion: public TType{
 	public:
 		std::vector<Field*> fields;
-		TUnion(unsigned long size,std::vector<Field*> fields):TType(size,false),fields(fields){}
+		TUnion(string name,unsigned long size,std::vector<Field*> fields):TType(name,size),fields(fields){}
 
 };
 
@@ -62,7 +64,7 @@ class TUnion: public TType{
 class TVar: public TElement{
 	public:
 		const TType& type;
-		TVar(const TType type):type(type){}
+		TVar(const TType& type):type(type){}
 };
 
 class TFunc: public TElement{
@@ -129,10 +131,10 @@ class Symtable {
 	int nextscope;
 	public:
 		Symtable():scope(0),nextscope(1){
-			table[tuple(string("char"),scope)]=new TType(sizeof(char),true,true);
-			table[tuple(string("integer"),scope)]=new TType(sizeof(int),true,true);
-			table[tuple(string("float"),scope)]=new TType(sizeof(float),true,true);
-			table[tuple(string("boolean"),scope)]=new TType(sizeof(bool),true);
+			table[tuple(string("char"),scope)]=new TType("char",sizeof(char),true,true);
+			table[tuple(string("integer"),scope)]=new TType("integer",sizeof(int),true,true);
+			table[tuple(string("float"),scope)]=new TType("float",sizeof(float),true,true);
+			table[tuple(string("boolean"),scope)]=new TType("boolean",sizeof(bool),true);
 		}
 		
 		

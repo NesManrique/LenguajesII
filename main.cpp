@@ -23,11 +23,6 @@ int main(int argc, char **argv)
 	    if(yyparse()==0)
             cout << "Todo bien" << endl;
 		cout<<ProgramAST<<" "<<&Table<<" ";
-<<<<<<< HEAD
 		cout<<ProgramAST->typeChk(Table)<<endl;
-=======
-		cout<<ProgramAST->typeChk()<<endl;
-
->>>>>>> ff3b506b1c55e23ea5c6d07da4b59a4bc756166a
 	    return 0;
 }
