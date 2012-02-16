@@ -122,18 +122,25 @@ class Symtable {
 	hash_map<tuple,TElement*> table;
 	list<int> scopeStack;
 	int scope;
+    int nextscope;
 	public:
 		Symtable():scope(0){
 			table[tuple(string("char"),scope)]=new TType(sizeof(char),true);
 			table[tuple(string("integer"),scope)]=new TType(sizeof(int),true);
 			table[tuple(string("float"),scope)]=new TType(sizeof(float),true);
-			table[tuple(string("boolean"),scope)]=new TType(sizeof(bool),true);
+			table[tuple(string("float"),scope)]=new TType(sizeof(bool),true);
+
 		}
 		
 		
 		int insert(string& name,TElement* elem){
 			table[tuple(name,scope)]=elem;
 		}
+
+        int insrtnextscope(string& name, TElement* elem){
+            table[tuple(name,scope+1)]=elem;
+        }
+
 		TElement* lookup(string name){
 			tuple t(name,scope);
 			hash_map<tuple,TElement*>::iterator it;
@@ -153,7 +160,17 @@ class Symtable {
 			}
 			return it->second;
 		}
-		int begScope(){scopeStack.push_front(scope);scope++;}
-		int endScope(){scopeStack.pop_front();}
-};
+        
+        TType* lookupType(string name){
+            tuple t(name,0);
+            hash_map<tuple,TElement*>::iterator it;
+            it=table.find(t);
+            if(it==table.end()){
+                return NULL;
+            }
+            return (TType *)it->second;
+        }
 
+        int begScope(){scopeStack.push_front(scope);scope=nextscope;nextscope++;}
+        int endScope(){scope=scopeStack.front();scopeStack.pop_front();}
+};

@@ -196,12 +196,12 @@ equivalentes si sus tipos poseen el mismo nombre.
 
 ##Asignación
 
-
+La asignación BLAH es una instrucción mas no es una expresión, en otras palabras, no retorna un valor. La asignación se hace mediante la palabra reservada `is` o mediante el símbolo tradicional `=`.
 
 ##Estructuras de control
+
+
+
 ##Expresiones
-##Funciones de libreria (I/O)
-##Programación Modular
-##Chequeos a tiempo de ejecución
 ##Lo que no tiene el lenguaje
 

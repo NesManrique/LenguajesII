@@ -190,18 +190,34 @@ DOUBLE	 {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 
 <CHARC>{
 
-    \n                  {printf("Unterminated string\n");
+    \n                  {printf("Character Error\n");
                             yycolumn = 1;}
 
-    \\n					yylval.Char = '\n';
-	\\v					yylval.Char = '\v';
-	\\t					yylval.Char = '\t';
-	\\r					yylval.Char = '\r';
-	\\b					yylval.Char = '\b';
-	\\f					yylval.Char = '\f';
-    \\s                 yylval.Char = ' ';
+    \\n					{yylval.Char = '\n';
+                            BEGIN(INITIAL);
+                            return CHAR;}
+	\\v					{yylval.Char = '\v';
+                            BEGIN(INITIAL);
+                            return CHAR;}
+	\\t					{yylval.Char = '\t';
+                            BEGIN(INITIAL);
+                            return CHAR;}
+	\\r					{yylval.Char = '\r';
+                            BEGIN(INITIAL);
+                            return CHAR;}
+	\\b					{yylval.Char = '\b';
+                            BEGIN(INITIAL);
+                            return CHAR;}
+	\\f					{yylval.Char = '\f';
+                            BEGIN(INITIAL);
+                            return CHAR;}
+    \\s                 {yylval.Char = ' ';
+                            BEGIN(INITIAL);
+                            return CHAR;}
 
-    .                   yylval.Char = yytext[0];
+    .                   {yylval.Char = yytext[0];
+                            BEGIN(INITIAL);
+                            return CHAR;}
 }
  
 %%

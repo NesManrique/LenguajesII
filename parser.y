@@ -78,11 +78,12 @@ Symtable Table;
 program 	: decls {ProgramAST = $1;}
 			;
 
-decls		: decl	{$$ = new NBlock();$$->statements.push_back($<stmt>1);
+decls		: decl	{$$ = new NBlock();
+                      $$->statements.push_back($<stmt>1);
                         flagfdecl=0;}
 			| decls decl {$$->statements.push_back($<stmt>2);}
             | error decl { fprintf(stderr, 
-                                    "Error in declaration, l%d,c%d-l%d,c%d",
+                                    "Error in declaration, l%d,c%d-l%d,c%d\n",
                                     @1.first_line, @1.first_column,
                                     @1.last_line, @1.last_column);
                             if(flagfdecl)
@@ -94,14 +95,27 @@ decl		: var_decl '.'
 			| union_decl 
 			| fun_decl
             | error '.' {fprintf(stderr, 
-                                    "Error in declaration, l%d,c%d-l%d,c%d",
+                                    "Error in declaration, l%d,c%d-l%d,c%d\n",
                                     @1.first_line, @1.first_column,
                                     @1.last_line, @1.last_column);}
 
 			;
 
-var_decl	: ident ident {$$ = new NVariableDeclaration(*$1,*$2);}
-			| ident ident '=' expr {$$ = new NVariableDeclaration(*$1,*$2,$4);}
+var_decl	: ident ident {$$ = new NVariableDeclaration(*$1,*$2);
+                            TElement * t;
+                            cout << $1->name << endl;
+                            cout << $2->name << endl;
+                            if((t=Table.lookupType($1->name))!=NULL){
+                                Table.insert($2->name,new TVar(*((TType *)t)));
+                             }
+                          }
+			| ident ident '=' expr {$$ = new NVariableDeclaration(*$1,*$2,$4);
+                                    TElement * t;
+                            cout << $1->name << "ini" << endl;
+                            cout << $2->name << "ini" << endl;
+                                    if((t=Table.lookupType($1->name))!=NULL){
+                                        Table.insert($2->name,
+                                        new TVar(*((TType *)t)));}}
             /*| ident error {}*/
 			;
 
@@ -110,7 +124,7 @@ fun_decl	: ident FUN ident fun_decl_args block {$$ = new NFunctionDeclaration(*$
 
 union_decl	: UNION ident '{' var_decls '}' {$$ = new NUnionDeclaration(*$2,*$4);}
             | UNION ident '{' error '}' {fprintf(stderr, 
-                                    "Error in union member declarations, l%d,c%d-l%d,c%d",
+                                    "Error in union member declarations, l%d,c%d-l%d,c%d\n",
                                     @4.first_line, @4.first_column,
                                     @4.last_line, @4.last_column);}
 
@@ -118,7 +132,7 @@ union_decl	: UNION ident '{' var_decls '}' {$$ = new NUnionDeclaration(*$2,*$4);
 
 reg_decl	: REGISTER ident '{' var_decls '}' {$$ = new NRegisterDeclaration(*$2,*$4);}
             | REGISTER ident '{' error '}' {fprintf(stderr, 
-                                    "Error in register member declarations, l%d,c%d-l%d,c%d",
+                                    "Error in register member declarations, l%d,c%d-l%d,c%d\n",
                                     @4.first_line, @4.first_column,
                                     @4.last_line, @4.last_column);}
 			;
@@ -126,7 +140,7 @@ reg_decl	: REGISTER ident '{' var_decls '}' {$$ = new NRegisterDeclaration(*$2,*
 var_decls	: var_decl {$$ = new VariableList();$$->push_back($<var_decl>1);}
 			| var_decls ',' var_decl {$$->push_back($<var_decl>3);}
             | var_decls error var_decl {fprintf(stderr, 
-                                    "Missing ' character, l%d,c%d-l%d,c%d",
+                                    "Missing ' character, l%d,c%d-l%d,c%d\n",
                                     @2.first_line, @2.first_column,
                                     @2.last_line, @2.last_column);
                                     $$->push_back($<var_decl>3);}
@@ -135,7 +149,7 @@ var_decls	: var_decl {$$ = new VariableList();$$->push_back($<var_decl>1);}
 fun_decl_args: '(' ')' {$$ = new VariableList();}
 			| '(' fun_decl_args_list ')' {$$ = $2;}
             | '(' fun_decl_args_list error {fprintf(stderr, 
-                                    "Missing ) character, l%d,c%d-l%d,c%d",
+                                    "Missing ) character, l%d,c%d-l%d,c%d\n",
                                     @3.first_line, @3.first_column,
                                     @3.last_line, @3.last_column);
                                     $$= $2;}
@@ -144,7 +158,7 @@ fun_decl_args: '(' ')' {$$ = new VariableList();}
 fun_decl_args_list: var_decl {$$ = new VariableList();$$->push_back($<var_decl>1);}
 			| fun_decl_args_list ',' var_decl {$$->push_back($<var_decl>3);}
             | fun_decl_args_list error var_decl {fprintf(stderr, 
-                                    "Missing ' character, l%d,c%d-l%d,c%d",
+                                    "Missing ' character, l%d,c%d-l%d,c%d\n",
                                     @2.first_line, @2.first_column,
                                     @2.last_line, @2.last_column);
                                     $$->push_back($<var_decl>3);
@@ -155,10 +169,10 @@ ident		: ID {$$ = new NIdentifier(*$1);}
 
 
 expr		: lrexpr{$$ = $<expr>1;} 
-			| INT	{$$ = new NInteger($1);printf("%lld\n",$1);}	
-			| FLOAT	{$$ = new NDouble($1);printf("%f\n",$1);}
-			| STR 	{$$ = new NString(*$1);printf("%s\n",$1->c_str());}
-			| CHAR	{$$ = new NChar($1);printf("%c\n",$1);}	
+			| INT	{$$ = new NInteger($1);}	
+			| FLOAT	{$$ = new NDouble($1);}
+			| STR 	{$$ = new NString(*$1);}
+			| CHAR	{$$ = new NChar($1);}	
 			| TRUE	{$$=new NBool(true);}
 			| FALSE	{$$=new NBool(false);}
 			| fun_call  
@@ -214,7 +228,7 @@ end_block	: '}' {Table.endScope();}
 stmts		: stmt  {$$ = new NBlock();$$->statements.push_back($1);}
 			| stmts stmt {$$->statements.push_back($2);}
             | error stmt { fprintf(stderr, 
-                                    "Error in previous stament, l%d,c%d-l%d,c%d",
+                                    "Error in previous stament, l%d,c%d-l%d,c%d\n",
                                     @2.first_line, @2.first_column,
                                     @2.last_line, @2.last_column);
                                     $$->statements.push_back($2);}

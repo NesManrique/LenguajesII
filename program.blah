@@ -1,4 +1,12 @@
-integer function HOLA(){}
+
+integer s is 5.
+character d is #$.
+boolean b is true.
+float a is 5.6.
+
+union Un {boolean a, character b, integer c}
+
+register Reg {boolean a, character b, integer c}
 
 float function suma(integer a,integer b=1){
 	a[2]->elsa[3] is a->x.
@@ -6,16 +14,10 @@ float function suma(integer a,integer b=1){
 	return c.
 }
 
-register REG{
+//union Un {	boolean a,	character b,	integer c,	float d}
 
-	character e,
-	boolean t
-}
-
-union Un {	boolean a,	character b,	integer c,	float d}
-
-integer a.
-float b.
+//integer a.
+//float b.
 
 // integer es un cometario asodifaeoi de una linea
 /* esto es un cometario de bloque
@@ -25,7 +27,7 @@ asdf  */
 
 void function  main(){
 	integer a is (2).
-	float b is 2.1.
+//	float b is 2.1.
 
 	for x in S {
 		while (true) do {
