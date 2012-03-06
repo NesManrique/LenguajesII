@@ -35,8 +35,8 @@ class TType: public TElement {
 		const string name;
 		const unsigned long size;
 		const bool basic;
-		const bool numeric;
-		TType(string name,unsigned long size,bool basic=false,bool numeric=false):name(name),size(size),basic(basic),numeric(numeric){};
+		const int typeception; //0 var,1=numeric,2=array,3=struct
+		TType(string name,unsigned long size,bool basic=false,int typeception=0):name(name),size(size),basic(basic),typeception(typeception){};
 };
 
 class Field{
@@ -69,7 +69,7 @@ class TVar: public TElement{
 
 class TFunc: public TElement{
 	public:
-		const TType& type;
+		TType& type;
 		const std::vector<TType*> args;
 		TFunc(TType& type, std::vector<TType*> args):type(type),args(args){}
 };
@@ -81,33 +81,6 @@ class TArray: public TElement{
 		TArray(TType& type, int length):type(type),length(length){}
 };
 
-
-/*
-class idinfo{
-    public:
-        int attribute;
-        string type;
-        int size;
-        union{
-            float valuef;
-            int valuei;
-            char valuec;
-            string * values;
-            bool valueb;
-        } ;
-        VariableList * args;
-
-    idinfo(){};
-    idinfo(int attribute, string type, int size):attribute(attribute),type(type),size(size){}
-    idinfo(int attribute, string type, int size, float valuef):attribute(attribute),type(type),size(size),valuef(valuef){}
-    idinfo(int attribute, string type, int size, int valuei):attribute(attribute),type(type),size(size),valuef(valuei){}
-    idinfo(int attribute, string type, int size, char valuec):attribute(attribute),type(type),size(size),valuef(valuec){}
-    idinfo(int attribute, string type, int size, string * values):attribute(attribute),type(type),size(size),values(values){}
-    idinfo(int attribute, string type, int size, bool valueb):attribute(attribute),type(type),size(size),valueb(valueb){}
-    idinfo(int attribute, string type, int size, VariableList *args):attribute(attribute),type(type),size(size),args(args){}
-    
-};
-*/
 namespace __gnu_cxx{
     template<> class hash<tuple>{
         public:
@@ -135,7 +108,8 @@ class Symtable {
 			table[tuple(string("integer"),scope)]=new TType("integer",sizeof(int),true,true);
 			table[tuple(string("float"),scope)]=new TType("float",sizeof(float),true,true);
 			table[tuple(string("boolean"),scope)]=new TType("boolean",sizeof(bool),true);
-			table[tuple(string("ezequiel"),scope)]=new TType("boolean",sizeof(bool),true);
+			table[tuple(string("void"),scope)]=new TType("void",0,true);
+		//	table[tuple(string("ezequiel"),scope)]=new TType("boolean",sizeof(bool),true);
 		}
 		
 		
@@ -147,7 +121,7 @@ class Symtable {
             table[tuple(name,scope+1)]=elem;
         }
 
-		TElement* lookup(string name){
+		TElement* lookup(const string name){
 			tuple t(name,scope);
 			hash_map<tuple,TElement*>::iterator it;
 			it=table.find(t);
@@ -166,8 +140,27 @@ class Symtable {
 			}
 			return it->second;
 		}
-        
-        TType* lookupType(string name){
+		
+		TFunc* lookupFunc(const string name){
+			tuple t(name,scope);
+			hash_map<tuple,TElement*>::iterator it;
+			it=table.find(t);
+			if(it==table.end()){
+				list<int>::iterator lit;
+				for(lit = scopeStack.begin();lit!=scopeStack.end();lit++){
+					t=tuple(name,*lit);
+					it=table.find(t);
+					if(!(it==table.end())){
+						break;
+					}
+				}
+			}
+			if(it==table.end()){
+				return NULL;
+			}
+			return (TFunc*)it->second;
+		}
+        TType* lookupType(const string name){
             tuple t(name,0);
             hash_map<tuple,TElement*>::iterator it;
             it=table.find(t);

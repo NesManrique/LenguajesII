@@ -170,8 +170,8 @@ expr		: lrexpr{$$ = $<expr>1;}
 			| FLOAT	{$$ = new NDouble($1);}
 			| STR 	{$$ = new NString(*$1);}
 			| CHAR	{$$ = new NChar($1);}	
-			| TRUE	{$$=new NBool(true);}
-			| FALSE	{$$=new NBool(false);}
+			| TRUE	{$$ = new NBool(true);}
+			| FALSE	{$$ = new NBool(false);}
 			| fun_call  
 			| expr '+' expr {$$=new NBinaryOperator(*$1,"+",*$3);}
 			| expr '-' expr {$$=new NBinaryOperator(*$1,"-",*$3);}

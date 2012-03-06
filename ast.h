@@ -13,7 +13,7 @@ typedef std::vector<NVariableDeclaration*> VariableList;
 
 class Node{
 	public:
-		virtual TType* typeChk(Symtable& t){return NULL;}
+		virtual TType* typeChk(Symtable& t){return t.lookupType("void");}
 		virtual ~Node() {}
 };
 
@@ -59,7 +59,9 @@ class NDouble : public NExpression {
 class NString : public NExpression {
 	public :
 		std::string value;
-		NString(const std::string &value) : value(value) {}
+		NString(const std::string &value) : value(value) {
+			
+		}
 };
 
 class NArray : public NExpression {
@@ -81,7 +83,7 @@ class NBool : public NExpression {
 	public:
 		bool value;
 		NBool(bool value) :value(value){}
-		TType* typeChk(Symtable t){
+		TType* typeChk(Symtable& t){
 			return (TType*)t.lookupType("boolean");
 		}
 };
@@ -92,16 +94,21 @@ class NIdentifier : public NLRExpression {
 		TType* type;
 		NIdentifier(const std::string &name) : name(name){}
 		NIdentifier(const std::string &name,TType* type) : name(name),type(type){}
-		TType* typeChk(Symtable t){
+		TType* typeChk(Symtable& t){
 			return type;
 		}
 };
 
 class NArrayAccess : public NLRExpression{
 	public:
-		const NLRExpression &lexpr;
+		NLRExpression &lexpr;
 		NExpression &index;
-		NArrayAccess(const NLRExpression &lexpr, NExpression &index):lexpr(lexpr),index(index){}
+		NArrayAccess(NLRExpression &lexpr, NExpression &index):lexpr(lexpr),index(index){}
+		TType* typeChk(Symtable &t){
+			if (index.typeChk(t)->name=="integer") return lexpr.typeChk(t);
+			fprintf(stderr,"Array index must be an integer\n");
+			return NULL;
+		}
 };
 
 class NStructAccess : public NLRExpression{
@@ -120,6 +127,7 @@ class NFunctionCall : public NExpression {
 			for(int i=0;i<arguments.size();i++){
 				arguments[i]->typeChk(t);
 			}
+			return &t.lookupFunc(id.name)->type;
 		}
 };
 
@@ -142,7 +150,7 @@ class  NBinaryOperator : public NExpression {
 					return t1;
 				}
 			}else{
-				if(t1->numeric && t2->numeric){
+				if(t1->typeception==1 && t2->typeception==1){
 					if(t1->name=="float") return t1;
 					if(t2->name=="float") return t2;
 					return t1;
@@ -169,14 +177,14 @@ class NUnaryOperator : public NExpression {
 				if(t2->name=="boolean"){
 					return t2;
 				}else{
-					fprintf(stderr,"%s expected a numeric type but received a %s\n",op.c_str(),t2->name.c_str());
+					fprintf(stderr,"%s expected a boolean type but received a %s\n",op.c_str(),t2->name.c_str());
 					return NULL;
 				}
 			}else{
-				if(t2->numeric){
+				if(t2->typeception==1){
 					return t2;
 				}else{
-					fprintf(stderr,"%s expected a boolean and received a %s\n",op.c_str(),t2->name.c_str());
+					fprintf(stderr,"%s expected a numeric and received a %s\n",op.c_str(),t2->name.c_str());
 					return NULL;
 				}
 			}
@@ -191,7 +199,7 @@ class NBlock: public NStatement{
 			for(int i=0;i<statements.size();i++){
 				statements[i]->typeChk(t);
 			}
-            return NULL;
+            return t.lookupType("void");
 		}
 };
 
@@ -201,15 +209,20 @@ class NVariableDeclaration : public NStatement {
 		const NIdentifier& type;
 		NIdentifier& id;
 		NExpression *assigment;
-		NVariableDeclaration(const NIdentifier& type, NIdentifier& id):type(type),id(id),assigment(NULL){}
-		NVariableDeclaration(const NIdentifier& type,NIdentifier& id,NExpression* assignment):type(type),id(id),assigment(assigment){}
+		NVariableDeclaration(const NIdentifier& type,NIdentifier& id,NExpression* assignment=NULL):type(type),id(id),assigment(assignment){}
 		TType* typeChk(Symtable &t){
 			TType* t1 = t.lookupType(type.name);
+			if(t1==NULL) {
+				cerr<<"Type "<<type.name<<" not defined"<<endl;	
+				return NULL;
+			}
 			if(assigment!=NULL){
 				TType* t2 = assigment->typeChk(t);
-				if (t1->name!=t1->name){
+				//cout<<"declsign"<<t1<<' '<<t2<<endl;
+				if(t2==NULL) return NULL;
+				if (t1->name!=t2->name){
 					fprintf(stderr,"%s declared as %s but inicialized with %s\n",id.name.c_str(),t1->name.c_str(),t2->name.c_str());
-					//return error
+					return NULL;
 				}
 				
 			}
@@ -324,8 +337,18 @@ class NReturn : public NStatement{
 
 class NAssignment : public NStatement{
 	public:
-		const NLRExpression* var;
+		NLRExpression* var;
 		NExpression* assig;
-		NAssignment (const NLRExpression * var, NExpression *assigment):var(var),assig(assigment){}
-
+		NAssignment (NLRExpression * var, NExpression *assigment):var(var),assig(assigment){}
+		TType* typeChk(Symtable &t){
+			printf("asdf\n");
+			TType* varT = var->typeChk(t);
+			TType* assigT = assig->typeChk(t);
+			if (varT == NULL || assigT == NULL){
+				return NULL;
+			} else if (varT->name!=assigT->name){
+				fprintf(stderr,"The assignment  expects a %s but received a %s\n",varT->name.c_str(),assigT->name.c_str());
+				return NULL;
+			}
+		}
 };

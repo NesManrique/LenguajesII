@@ -1,11 +1,11 @@
 
 integer s is 5.
-character d is #$.
+char d is #$.
 boolean b is true.
 float a is 5.6.
 
 integer s is 5.
-character e is s.
+char e is s.
 
 /*union Un {boolean a, character b, integer c}
 

@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 	    if(yyparse()==0)
             cout << "Parsing is over" << endl;
         cout << "Beginning Type Check" << endl;
-		ProgramAST->typeChk(Table);
+		cout << ProgramAST->typeChk(Table)->name;
         cout << "Type Check Finished" << endl;
 	    return 0;
 }
