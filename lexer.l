@@ -107,8 +107,9 @@ DOUBLE	 {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 */	
 	"register"			{return REGISTER;}
 	"union"				{return UNION;}
+	"arrayof"			{return ARRAY;}
 
-	"function"			{return FUN;}
+	/*"function"			{return FUN;}*/
 
 	{ID}				{SAVE_TOKEN; return ID;}
 

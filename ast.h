@@ -68,6 +68,21 @@ class NArray : public NExpression {
 	public :
 		ExpressionList values;
 		NArray() { }
+        TType* typeChk(Symtable& t){
+            bool err=false;
+            TType* first=values[0]->typeChk(t);
+            for(int i=1; i<values.size(); i++){
+                if(first->name != values[i]->typeChk(t)->name)
+                    err=true;
+            }
+           
+            if(err){
+                fprintf(stderr, "Array elements are not the same type.");
+                return NULL;
+            }else{
+                return //arreglo de tipo first;
+            }
+        }
 };
 
 class NChar : public NExpression {
@@ -250,10 +265,40 @@ class NArrayDeclaration : public NStatement{
 	public:
 		const NIdentifier& id;
 		const NIdentifier& type;
+        const NExpression& size;
 		ExpressionList elements;
-		NArrayDeclaration(const NIdentifier& id, const NIdentifier& type, 
-				ExpressionList& elements) :
-			id(id), type(type), elements(elements){}
+		NArrayDeclaration(const NIdentifier& id, const NIdentifier& type,
+				const NExpression& size, ExpressionList& elements) :
+			id(id), type(type), size(size), elements(*(new ExpressionList())){}
+
+		NArrayDeclaration(const NIdentifier& id, const NIdentifier& type,
+				const NExpression& size, ExpressionList& elements) :
+			id(id), type(type), size(size), elements(elements){}
+
+        TType* typeChk(Symtable &t){
+            TType* s = size->typeChk(&t);
+            TType* t = type->typeChk(&t);
+            bool err=false;
+
+            if(t->name == NULL){
+                fprintf(stderr, "Array elements are not the same type.");
+                return NULL;
+            }else if(s->name!="integer"){
+                fprintf(stderr, "Array size expression is not an integer.");
+                return NULL;
+            }
+
+            for(int i=0; i<elements.size(); i++){
+                if(t->name != elements[i]->typeChk(t)->name)
+                    err=true;
+            }
+
+            if(err){
+                fprintf(stderr, "Array elements are not the same type as array type declaration.");
+                return NULL;
+            }
+            
+        }
 };
 
 class NRegisterDeclaration : public NStatement{

@@ -35,8 +35,10 @@ class TType: public TElement {
 		const string name;
 		const unsigned long size;
 		const bool basic;
-		const int typeception; //0 var,1=numeric,2=array,3=struct
-		TType(string name,unsigned long size,bool basic=false,int typeception=0):name(name),size(size),basic(basic),typeception(typeception){};
+		const bool arr;
+		const bool struc;
+		const bool numeric;
+		TType(string name,unsigned long size,bool basic=false, bool numeric=false, bool struc=false, bool arr=false):name(name),size(size),basic(basic),numeric(numeric),struc(struc),arr(arr){};
 };
 
 class Field{

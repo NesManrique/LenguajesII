@@ -15,7 +15,7 @@ boolean t.
 
 
 //coleccion
-array of integer x.
+arrayof 10 integer x.
 string x. //string es un arreglo de caracteres con informacion del tamano.
 
 
