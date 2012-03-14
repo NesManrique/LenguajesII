@@ -26,6 +26,7 @@ Symtable Table;
 	NLRExpression *lrexpr;
 	NVariableDeclaration *var_decl;
 	NArrayDeclaration *arr_decl;
+	NFunctionDeclaration *fun_decl;
 	NArrayAccess *arr_access;
 	NRegisterDeclaration *reg_decl;
 	NUnionDeclaration *union_decl;
@@ -60,6 +61,7 @@ Symtable Table;
 %type	<varvec> fun_decl_args var_decls fun_decl_args_list
 %type	<exprvec>	fun_call_args fun_call_args_lst /*array_elem*/
 %type	<block>	program stmts block decls 
+%type 	<fun_decl> fun_firm
 %type	<stmt>	stmt var_decl fun_decl reg_decl ctrl_for
 %type	<stmt>	union_decl ctrl_while ctrl_if var_asgn
 /*%type	<token>	comparison*/
@@ -116,8 +118,10 @@ var_decl	: ident ident {
             /*| ident error {}*/
 			;
 
-fun_decl	: ident FUN ident fun_decl_args block {$$ = new NFunctionDeclaration(*$1,*$3,*$4,*$5);}
+fun_decl	: fun_firm block {$1->block = $2;$$ = $1;}
 			;
+
+fun_firm	: ident FUN ident fun_decl_args 	{$$ = new NFunctionDeclaration(*$1,*$3,*$4);} 
 
 union_decl	: UNION ident '{' var_decls '}' {$$ = new NUnionDeclaration(*$2,*$4);}
             | UNION ident '{' error '}' {fprintf(stderr, 

@@ -13,7 +13,7 @@ typedef std::vector<NVariableDeclaration*> VariableList;
 
 class Node{
 	public:
-		virtual TType* typeChk(Symtable& t){return t.lookupType("void");}
+		virtual TType* typeChk(Symtable& t,TType* expected = NULL){return t.lookupType("void");}
 		virtual ~Node() {}
 };
 
@@ -195,10 +195,16 @@ class NBlock: public NStatement{
 	public :
 		StatementList statements;
 		NBlock() {};
-		TType* typeChk(Symtable &t){
+		TType* typeChk(Symtable &t,TType* expected=NULL){
+			bool err=false;
+			TType* s;
 			for(int i=0;i<statements.size();i++){
-				statements[i]->typeChk(t);
+				s=statements[i]->typeChk(t,expected);
+				if(s==NULL && !err){
+					err=true;
+				}
 			}
+			if(err) {cerr << "error in block";return NULL;}
             return t.lookupType("void");
 		}
 };
@@ -219,7 +225,7 @@ class NVariableDeclaration : public NStatement {
 			if(assigment!=NULL){
 				TType* t2 = assigment->typeChk(t);
 				//cout<<"declsign"<<t1<<' '<<t2<<endl;
-				if(t2==NULL) return NULL;
+				if(t2==NULL) {cerr <<"Type Error asignemnt\n" ;return NULL;}
 				if (t1->name!=t2->name){
 					fprintf(stderr,"%s declared as %s but inicialized with %s\n",id.name.c_str(),t1->name.c_str(),t2->name.c_str());
 					return NULL;
@@ -230,21 +236,28 @@ class NVariableDeclaration : public NStatement {
 		}
 };
 
+
 class NFunctionDeclaration : public NStatement {
 	public:
 		const NIdentifier& type;
 		const NIdentifier& id;
 		VariableList args;
-		NBlock &block;
-		NFunctionDeclaration(const NIdentifier& type,const NIdentifier& id,const VariableList& args, NBlock block):type(type),id(id),args(args),block(block){}
-		TType* typeChk(Symtable &t){
+		NBlock *block;
+		NFunctionDeclaration(const NIdentifier& type,const NIdentifier& id,const VariableList& args, NBlock* block=NULL):type(type),id(id),args(args),block(block){}
+		TType* typeChk(Symtable &t,TType* expected){
+			bool err=false;
+			TType* c;
 			for(int i=0;i<args.size();i++){
-				args[i]->typeChk(t);
+				c=args[i]->typeChk(t);
+				if(c==NULL) err=true;
 			}
-			return block.typeChk(t);
+			block->typeChk(t,expected);
+			if(err) return NULL;
+			return t.lookupType("void");
 		}
 			
 };
+
 
 class NArrayDeclaration : public NStatement{
 	public:
@@ -276,9 +289,12 @@ class NWhileDo : public NStatement{
 		NExpression* cond;
 		NBlock& block;
 		NWhileDo(NExpression* cond, NBlock& block):cond(cond),block(block){}
-		TType* typeChk(Symtable &t){
-			cond->typeChk(t);	
-			return block.typeChk(t);
+		TType* typeChk(Symtable &t,TType* expected=NULL){
+			TType *a,*b;
+			a=cond->typeChk(t);	
+			b=block.typeChk(t,expected);
+			if(a==NULL || b==NULL) return NULL;
+			return t.lookupType("void");
 		}
 };
 
@@ -287,9 +303,12 @@ class NDoWhile : public NStatement{
 		NExpression* cond;
 		NBlock& block;
 		NDoWhile(NExpression* cond, NBlock& block):cond(cond),block(block){}
-		TType* typeChk(Symtable &t){
-			cond->typeChk(t);	
-			return block.typeChk(t);
+		TType* typeChk(Symtable &t,TType* expected){
+			TType *a,*b;
+			a=cond->typeChk(t);	
+			b=block.typeChk(t,expected);
+			if(a==NULL || b==NULL) return NULL;
+			return t.lookupType("void");
 		}
 };
 
@@ -300,10 +319,15 @@ class NIf : public NStatement{
 		NStatement* elseBlock;
 		NIf(NExpression& cond,NStatement& block):cond(cond),block(block){}
 		NIf(NExpression& cond,NStatement& block, NStatement* elseBlock):cond(cond),block(block),elseBlock(elseBlock){}
-		TType* typeChk(Symtable &t){
+		TType* typeChk(Symtable &t,TType* expected){
+			TType *a,*b,*c;
+			a=cond.typeChk(t);	
+			b=block.typeChk(t,expected);
+			if(elseBlock!=NULL) c=elseBlock->typeChk(t,expected);
+			if(a==NULL || b==NULL ) return NULL;
 			cond.typeChk(t);
-			if(elseBlock!=NULL) elseBlock->typeChk(t);
-			return block.typeChk(t);
+			if( a=NULL) return NULL;
+			return t.lookupType("void");
 		}
 };
 
@@ -318,6 +342,8 @@ class NFor : public NStatement{
 		NFor(NIdentifier& id,NExpression* beg,NExpression* end,NBlock& block): id(id),beg(beg),end(end),block(block){};
 		NFor(NIdentifier& id,NIdentifier* array,NBlock &block): id(id),array(array),block(block){};
 		
+		
+
 };
 
 class NStop : public NStatement{
@@ -329,9 +355,15 @@ class NNext : public NStatement{
 
 class NReturn : public NStatement{
 	public:
-		const NExpression* expr;
+		NExpression* expr;
 		NReturn(){}
 		NReturn(NExpression *expr):expr(expr){}
+
+		TType* typeChk(Symtable &t, TType *expects){
+			TType* s;
+			if((s=expr->typeChk(t,expects))->name==expects->name){return s;}
+			else return NULL;
+		}
 		
 };
 
@@ -350,5 +382,6 @@ class NAssignment : public NStatement{
 				fprintf(stderr,"The assignment  expects a %s but received a %s\n",varT->name.c_str(),assigT->name.c_str());
 				return NULL;
 			}
+			return varT;
 		}
 };
