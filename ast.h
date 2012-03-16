@@ -158,10 +158,22 @@ class NFunctionCall : public NExpression {
 		ExpressionList arguments;
 		NFunctionCall(const NIdentifier &id, ExpressionList &arguments) : id(id), arguments(arguments){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
+            TType* tip;
+		    std::vector<TType*> args;
 			for(int i=0;i<arguments.size();i++){
-				arguments[i]->typeChk(t);
+                tip = arguments[i]->typeChk(t);
+				if(tip == NULL){
+                    cerr << "Type of argument " << i << " doesn't exist" << endl;
+                }else{
+                    args.push_back(tip); 
+                }
 			}
-			return &t.lookupFunc(id.name)->type;
+
+            if(t.lookupFunc(id.name,args) == NULL){
+                cerr << "Function "<<id.name<<" was not declared"<< endl;
+			    return NULL;
+            }else
+                return t.lookupFunc(id.name,args)->type;
 		}
 };
 
@@ -282,7 +294,7 @@ class NFunctionDeclaration : public NStatement {
 			bool err=false;
 			TType* x=t.lookupType(type.name);
 			if(x==NULL){
-				cerr<<"Type "<<type.name<<"not defined"<<endl;
+				cerr<<"Type "<<type.name<<" not defined"<<endl;
 			}
 			TType* c;
 			for(int i=0;i<args.size();i++){
@@ -290,10 +302,37 @@ class NFunctionDeclaration : public NStatement {
 				if(c==NULL) err=true;
 			}
 			block->typeChk(t,x);
-			cerr<<x<<err<<endl;
+			//cerr<<x<<err<<endl;
 			if(err) return NULL;
 			return t.lookupType("void");
 		}
+
+        bool addSymtable(Symtable& t){
+            bool err=false;
+            TType* ret = t.lookupType(type.name);
+            if(ret==NULL){
+                cerr << "Error in function declaration " << id.name << " type " << ret->name << " does not exist" << endl;
+                err=true;
+            }
+            std::vector<TType*>* arguments = new vector<TType*>();
+            int i;
+            TType* c;
+            for(i=0; i<args.size(); i++){
+                c = t.lookupType(args[i]->type.name);
+                if(c==NULL){
+                    err=true;
+                    cerr << "Error in function declaration " << id.name << " type " << args[i]->type.name << " does not exist" << endl;
+                }
+                arguments->push_back(c);
+            }
+            if(err){
+             return false;
+            }
+            TFunc* f = new TFunc(id.name,c,arguments);
+            t.insertfun(f);
+            cout << "asd" <<endl;
+            return true;
+        }
 			
 };
 

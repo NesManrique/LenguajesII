@@ -122,7 +122,8 @@ var_decl	: ident ident {
 fun_decl	: fun_firm block {$1->block = $2;$$ = $1;}
 			;
 
-fun_firm	: ident ident fun_decl_args 	{$$ = new NFunctionDeclaration(*$1,*$2,*$3);} 
+fun_firm	: ident ident fun_decl_args 	{$$ = new NFunctionDeclaration(*$1,*$2,*$3);
+                                                $$->addSymtable(Table);} 
 
 arr_decl    : ARRAY expr ident ident {$$ = new NArrayDeclaration(*$4,*$3,*$2);}
             | ARRAY expr ident ident '=' '['expr_lst']' {$$ = new NArrayDeclaration(*$4,*$3,*$2,*$7);}

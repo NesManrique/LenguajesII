@@ -7,7 +7,17 @@ float a is 5.6.
 
 integer e is s.
 
+boolean prueba(integer a, char z){
+    return true.
+}
+
+boolean prueba(){
+    return false.
+}
+
 integer main(){
 
+    boolean a = prueba(1,#a).
+    boolean b = prueba().
 	return 0 .
 }
