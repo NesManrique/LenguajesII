@@ -50,7 +50,7 @@ Symtable Table;
 /*%token	<token> '=' '(' ')' '{' '}' ',' '.' '!' '<' '>' '%'
 %token	<token> '+' '-' '/' '*'*/
 %token 	<token> IF THEN ELSE FROM TO IN NEXT STOP
-%token	<token>	CHAR UNION FUN TRUE FALSE
+%token	<token>	CHAR UNION ARRAY TRUE FALSE
 %token 	<token> REGISTER DO WHILE RETURN FOR 
 %token	<string> ID
 
@@ -59,10 +59,10 @@ Symtable Table;
 %type 	<lrexpr>	lrexpr
 %type	<ident>	ident
 %type	<varvec> fun_decl_args var_decls fun_decl_args_list
-%type	<exprvec>	fun_call_args fun_call_args_lst /*array_elem*/
+%type	<exprvec>	fun_call_args expr_lst /*array_elem*/
 %type	<block>	program stmts block decls 
 %type 	<fun_decl> fun_firm
-%type	<stmt>	stmt var_decl fun_decl reg_decl ctrl_for
+%type	<stmt>	stmt var_decl fun_decl reg_decl arr_decl ctrl_for
 %type	<stmt>	union_decl ctrl_while ctrl_if var_asgn
 /*%type	<token>	comparison*/
 
@@ -93,6 +93,7 @@ decls		: decl	{$$ = new NBlock();
 			;
 
 decl		: var_decl '.'
+			| arr_decl '.'
 			| reg_decl 
 			| union_decl 
 			| fun_decl
@@ -121,7 +122,10 @@ var_decl	: ident ident {
 fun_decl	: fun_firm block {$1->block = $2;$$ = $1;}
 			;
 
-fun_firm	: ident FUN ident fun_decl_args 	{$$ = new NFunctionDeclaration(*$1,*$3,*$4);} 
+fun_firm	: ident ident fun_decl_args 	{$$ = new NFunctionDeclaration(*$1,*$2,*$3);} 
+
+arr_decl    : ARRAY expr ident ident {$$ = new NArrayDeclaration(*$4,*$3,*$2);}
+            | ARRAY expr ident ident '=' '['expr_lst']' {$$ = new NArrayDeclaration(*$4,*$3,*$2,*$7);}
 
 union_decl	: UNION ident '{' var_decls '}' {$$ = new NUnionDeclaration(*$2,*$4);}
             | UNION ident '{' error '}' {fprintf(stderr, 
@@ -147,14 +151,16 @@ var_decls	: var_decl {$$ = new VariableList();$$->push_back($<var_decl>1);}
                                     $$->push_back($<var_decl>3);}
 			;
 
-fun_decl_args: '(' ')' {$$ = new VariableList();}
-			| '(' fun_decl_args_list ')' {$$ = $2;}
-            | '(' fun_decl_args_list error {fprintf(stderr, 
+fun_decl_args: fun_scope ')' {$$ = new VariableList();}
+			| fun_scope fun_decl_args_list ')' {$$ = $2;}
+            | fun_scope fun_decl_args_list error {fprintf(stderr, 
                                     "Missing ) character, l%d,c%d-l%d,c%d\n",
                                     @3.first_line, @3.first_column,
                                     @3.last_line, @3.last_column);
                                     $$= $2;}
 			;
+
+fun_scope:  '(' {Table.begScope();}
 
 fun_decl_args_list: var_decl {$$ = new VariableList();$$->push_back($<var_decl>1);}
 			| fun_decl_args_list ',' var_decl {$$->push_back($<var_decl>3);}
@@ -170,7 +176,7 @@ ident		: ID {$$ = new NIdentifier(*$1);}
 
 
 expr		: lrexpr{$$ = $<expr>1;} 
-			| INT	{$$ = new NInteger($1);}	
+			| INT	{$$ = new NInteger($1);}
 			| FLOAT	{$$ = new NDouble($1);}
 			| STR 	{$$ = new NString(*$1);}
 			| CHAR	{$$ = new NChar($1);}	
@@ -215,12 +221,12 @@ lrexpr		: ident	{ if(Table.lookup($1->name)!=NULL){
 			; 
 
 fun_call_args : '(' ')' {$$= new ExpressionList();}
-			| '(' fun_call_args_lst ')' {$$=$2;}
+			| '(' expr_lst ')' {$$=$2;}
 			;	
 	
-fun_call_args_lst : expr {$$=new ExpressionList();$$->push_back($1);}
-			| fun_call_args_lst ',' expr {$$->push_back($3);}
-            | fun_call_args_lst error expr {}
+expr_lst    : expr {$$=new ExpressionList();$$->push_back($1);}
+			| expr_lst ',' expr {$$->push_back($3);}
+            | expr_lst error expr {}
             ;
 
 block		: beg_block end_block {$$ = new NBlock();}
@@ -247,7 +253,8 @@ stmt		: ctrl_if
 			| ctrl_for	
 			| block 	{$$=$<stmt>1;}
 			| var_decl '.' 
-			| var_asgn '.' 
+			| var_asgn '.'
+			| arr_decl '.'
 			| fun_call '.' {$$ = new NExpressionStatement(*$1);}
 			| RETURN '.' {$$ = new NReturn();}
 			| RETURN expr '.' {$$ = new NReturn($2);}

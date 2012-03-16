@@ -27,6 +27,9 @@ class tuple{
 
 class TElement {
 	public:
+		string name;
+		bool type;
+		bool arr;
 		virtual ~TElement(){};
 };
 
@@ -34,9 +37,10 @@ class TType: public TElement {
 	public:
 		const string name;
 		const unsigned long size;
+		const bool numeric;
 		const bool basic;
-		const int typeception; //0 var,1=numeric,2=array,3=struct
-		TType(string name,unsigned long size,bool basic=false,int typeception=0):name(name),size(size),basic(basic),typeception(typeception){};
+		const bool struc;
+		TType(string name,unsigned long size,bool basic=false, bool numeric=false, bool struc=false):name(name),size(size),basic(basic),numeric(numeric),struc(struc){};
 };
 
 class Field{
@@ -63,8 +67,8 @@ class TUnion: public TType{
 
 class TVar: public TElement{
 	public:
-		const TType& type;
-		TVar(const TType& type):type(type){}
+		TType& type;
+		TVar(TType& type):type(type){}
 };
 
 class TFunc: public TElement{
@@ -76,8 +80,8 @@ class TFunc: public TElement{
 
 class TArray: public TElement{
 	public:
-		const TType& type;
-		const int length;
+		TType& type;
+		int length;
 		TArray(TType& type, int length):type(type),length(length){}
 };
 
@@ -109,7 +113,7 @@ class Symtable {
 			table[tuple(string("float"),scope)]=new TType("float",sizeof(float),true,true);
 			table[tuple(string("boolean"),scope)]=new TType("boolean",sizeof(bool),true);
 			table[tuple(string("void"),scope)]=new TType("void",0,true);
-		//	table[tuple(string("ezequiel"),scope)]=new TType("boolean",sizeof(bool),true);
+			table[tuple(string("string"),scope)]=new TType("string",0,true);
 		}
 		
 		

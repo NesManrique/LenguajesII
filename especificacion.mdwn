@@ -119,10 +119,22 @@ acceder a los elementos de un arreglo desde el último hasta el primero con
 números negativos, siendo el último el indexado con -1 y el primero el indexado
 con -N. Para ilustrar:
 
-    ejemplo is array of integers {a,b,c,d,e}
+    ejemplo0 is arrayof 5 integers {a,b,c,d,e}
 
 El primer elemento `a` puede ser accedido como `ejemplo[0]` o como `ejemplo[-5]`
 y el elemento `e` puede ser accedido como `ejemplo[4]` o como `ejemplo[-1]`.
+
+Si el tamaño dispuesto para el arreglo es diferente a la cantidad de elementos listados 
+se generará un warning y se tomará la menor entre estas dos cantidades para inicializar
+esa cantidad de elementos. Por ejemplo:
+
+    ejemplo1 is arrayof 10 characters {a,b,c}
+
+En ese caso se inicializará un arreglo de tamaño 10, cuyos 3 primeros elementos son `a`, `b` y `c`; el resto son null.
+
+    ejemplo2 is arrayof 3 characters {u,v,w,x,y,z}
+
+En ese caso se inicializará un arreglo de tamaño 3, cuyos 3 primeros elementos son `u`,`v` y ,`w`.
 
 ##Cadenas de Caracteres
 

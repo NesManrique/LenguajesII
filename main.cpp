@@ -14,24 +14,19 @@ extern int yyparse();
 extern NBlock *ProgramAST;
 extern Symtable Table;
 
+
 int main(int argc, char **argv)
 {
 #ifdef DEBUG	
 		yydebug=1;
 #endif
 		freopen(argv[1],"r",stdin);
-        /*Table.lookupType("character");
-        Table.lookupType("integer");
-        Table.lookupType("float");
-        Table.lookupType("boolean");
-        Table.insert("sdasd",new TVar());
-        Table.insert("qweqwr",new TVar());
-        Table.insert("zxczxc",new TVar());
-        Table.insert("fghhf",new TVar());*/
-	    if(yyparse()==0)
+
+	    if(yyparse()==0){
             cout << "Parsing is over" << endl;
-        cout << "Beginning Type Check" << endl;
-		cout << ProgramAST->typeChk(Table)<< endl;
-        cout << "Type Check Finished" << endl;
+     	  	cout << "Beginning Type Check" << endl;
+			cout << ProgramAST->typeChk(Table)<< endl;
+ 	      	cout << "Type Check Finished" << endl;
+		}
 	    return 0;
 }
