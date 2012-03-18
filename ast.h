@@ -146,10 +146,17 @@ class NArrayAccess : public NLRExpression{
 
 class NStructAccess : public NLRExpression{
 	public:
-		const NLRExpression &lexpr;
+		NLRExpression &lexpr;
 		NIdentifier &name;
-		NStructAccess(const NLRExpression &lexpr,NIdentifier &name):lexpr(lexpr),name(name){}
-
+		NStructAccess(NLRExpression &lexpr,NIdentifier &name):lexpr(lexpr),name(name){}
+		TType* typeChk(Symtable& t,TType* expected = NULL){
+			TType* temp = lexpr.typeChk(t)
+			if (temp == NULL) return NULL;
+			if (!temp->struc) {
+				cerr << lexpr.name<< " is not a struct or union"<<endl;
+				return NULL
+			}
+		}
 };
 
 class NFunctionCall : public NExpression {
@@ -350,6 +357,8 @@ class NUnionDeclaration : public NStatement{
 		const NIdentifier& type;
 		VariableList fields;
 		NUnionDeclaration(const NIdentifier& type, VariableList fields) : type(type), fields(fields){}
+		TType* typeChk(Symtable& t,TType* expected = NULL){
+		}
 };
 
 

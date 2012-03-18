@@ -10,7 +10,7 @@ extern int yylex (void);
 void yyerror(char const *s, ...);
 
 NBlock *ProgramAST;
-int flagerror;
+bool flagerror=false;
 int flagfdecl=1;
 Symtable Table;
 %}

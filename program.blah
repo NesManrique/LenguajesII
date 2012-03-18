@@ -4,6 +4,10 @@ char d is #$.
 boolean b is true.
 float a is 5.6.
 
+register ASDF{
+	integer a,
+	float c
+}
 
 integer e is s.
 
