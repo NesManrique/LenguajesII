@@ -136,7 +136,7 @@ class Symtable {
 			table[tuple(name,scope)]=elem;
 		}
 
-		int insertfun(TFunc* fun){
+		bool insertfun(TFunc* fun){
 			hash_map<string,TFunc*>::iterator it;
             string key = string(fun->name);
             int i;
@@ -148,12 +148,15 @@ class Symtable {
 			if(it==funtable.end()){
 			    funtable[key]=fun;
 			}else{
-                cout << "function already exists" << endl;
+                //cerr << "Function `" <<key<< "` was declare before." << endl;
+                return false;
             }
-            
-            cout << "key " << key << endl; 
-
+           
+            #ifdef DEBUG
+            cout << "inserting key " << key << endl; 
+            #endif
             funtable[key]=fun;
+            return true;
 
 		}
 
@@ -188,7 +191,9 @@ class Symtable {
             for(i=0; i<args.size(); i++){
                 key += args[i]->name;
             }
-            cout << "key buscando" << key << endl; 
+            #ifdef DEBUG
+            cout << "key buscando " << key << endl; 
+            #endif
 			it=funtable.find(key);
 			if(it==funtable.end()){
 			    return NULL;	

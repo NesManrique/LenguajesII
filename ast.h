@@ -172,8 +172,12 @@ class NFunctionCall : public NExpression {
             if(t.lookupFunc(id.name,args) == NULL){
                 cerr << "Function "<<id.name<<" was not declared"<< endl;
 			    return NULL;
-            }else
+            }else{
+                #ifdef DEBUG
+                cerr << "Function call type "<<(t.lookupFunc(id.name,args)->type)->name<< endl;
+                #endif
                 return t.lookupFunc(id.name,args)->type;
+            }
 		}
 };
 
@@ -270,7 +274,9 @@ class NVariableDeclaration : public NStatement {
 			}
 			if(assigment!=NULL){
 				TType* t2 = assigment->typeChk(t);
+                #ifdef DEBUG
 				cout<<"declsign"<<t1<<' '<<t2<<endl;
+                #endif
 				if(t2==NULL) {cerr <<"Type Error assignment\n" ;return NULL;}
 				if (t1->name!=t2->name){
 					fprintf(stderr,"%s declared as %s but inicialized with %s\n",id.name.c_str(),t1->name.c_str(),t2->name.c_str());
@@ -293,6 +299,7 @@ class NFunctionDeclaration : public NStatement {
 		TType* typeChk(Symtable& t,TType* expected = NULL){
 			bool err=false;
 			TType* x=t.lookupType(type.name);
+		    cout<<"Type Function test "<<type.name<<endl;
 			if(x==NULL){
 				cerr<<"Type "<<type.name<<" not defined"<<endl;
 			}
@@ -307,7 +314,7 @@ class NFunctionDeclaration : public NStatement {
 			return t.lookupType("void");
 		}
 
-        bool addSymtable(Symtable& t){
+        int addSymtable(Symtable& t){
             bool err=false;
             TType* ret = t.lookupType(type.name);
             if(ret==NULL){
@@ -326,12 +333,13 @@ class NFunctionDeclaration : public NStatement {
                 arguments->push_back(c);
             }
             if(err){
-             return false;
+             return 1;
             }
-            TFunc* f = new TFunc(id.name,c,arguments);
-            t.insertfun(f);
-            cout << "asd" <<endl;
-            return true;
+            TFunc* f = new TFunc(id.name,ret,arguments);
+            if(!t.insertfun(f))
+                return 2;
+            else
+                return 0;
         }
 			
 };
@@ -449,8 +457,6 @@ class NFor : public NStatement{
 		NBlock& block;
 		NFor(NIdentifier& id,NExpression* beg,NExpression* end,NBlock& block): id(id),beg(beg),end(end),block(block){};
 		NFor(NIdentifier& id,NIdentifier* array,NBlock &block): id(id),array(array),block(block){};
-		
-		
 
 };
 
@@ -466,7 +472,6 @@ class NReturn : public NStatement{
 		NExpression* expr;
 		NReturn(){}
 		NReturn(NExpression *expr):expr(expr){}
-
 		TType* typeChk(Symtable& t,TType* expected = NULL){
 			TType* s=expr->typeChk(t);
 			cerr<<s->name<<expected->name<<endl;
@@ -482,7 +487,6 @@ class NAssignment : public NStatement{
 		NExpression* assig;
 		NAssignment (NLRExpression * var, NExpression *assigment):var(var),assig(assigment){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
-			cout<<"asdf"<<endl;
 			TType* varT = var->typeChk(t);
 			TType* assigT = assig->typeChk(t);
 			if (varT == NULL || assigT == NULL){

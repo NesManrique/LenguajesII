@@ -15,9 +15,13 @@ boolean prueba(){
     return false.
 }
 
+boolean prueba(){
+    return true.
+}
+
 integer main(){
 
-    boolean a = prueba(1,#a).
-    boolean b = prueba().
+    boolean y = prueba(1,#t).
+    boolean w = prueba().
 	return 0 .
 }
