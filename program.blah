@@ -11,7 +11,21 @@ register ASDF{
 
 integer e is s.
 
+boolean prueba(integer a, char z){
+    return true.
+}
+
+boolean prueba(){
+    return false.
+}
+
+boolean prueba(){
+    return true.
+}
+
 integer main(){
 
+    boolean y = prueba(1,#t).
+    boolean w = prueba().
 	return 0 .
 }

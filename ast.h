@@ -165,10 +165,26 @@ class NFunctionCall : public NExpression {
 		ExpressionList arguments;
 		NFunctionCall(const NIdentifier &id, ExpressionList &arguments) : id(id), arguments(arguments){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
+            TType* tip;
+		    std::vector<TType*> args;
 			for(int i=0;i<arguments.size();i++){
-				arguments[i]->typeChk(t);
+                tip = arguments[i]->typeChk(t);
+				if(tip == NULL){
+                    cerr << "Type of argument " << i << " doesn't exist" << endl;
+                }else{
+                    args.push_back(tip); 
+                }
 			}
-			return &t.lookupFunc(id.name)->type;
+
+            if(t.lookupFunc(id.name,args) == NULL){
+                cerr << "Function "<<id.name<<" was not declared"<< endl;
+			    return NULL;
+            }else{
+                #ifdef DEBUG
+                cerr << "Function call type "<<(t.lookupFunc(id.name,args)->type)->name<< endl;
+                #endif
+                return t.lookupFunc(id.name,args)->type;
+            }
 		}
 };
 
@@ -265,7 +281,9 @@ class NVariableDeclaration : public NStatement {
 			}
 			if(assigment!=NULL){
 				TType* t2 = assigment->typeChk(t);
+                #ifdef DEBUG
 				cout<<"declsign"<<t1<<' '<<t2<<endl;
+                #endif
 				if(t2==NULL) {cerr <<"Type Error assignment\n" ;return NULL;}
 				if (t1->name!=t2->name){
 					fprintf(stderr,"%s declared as %s but inicialized with %s\n",id.name.c_str(),t1->name.c_str(),t2->name.c_str());
@@ -288,8 +306,9 @@ class NFunctionDeclaration : public NStatement {
 		TType* typeChk(Symtable& t,TType* expected = NULL){
 			bool err=false;
 			TType* x=t.lookupType(type.name);
+		    cout<<"Type Function test "<<type.name<<endl;
 			if(x==NULL){
-				cerr<<"Type "<<type.name<<"not defined"<<endl;
+				cerr<<"Type "<<type.name<<" not defined"<<endl;
 			}
 			TType* c;
 			for(int i=0;i<args.size();i++){
@@ -297,10 +316,38 @@ class NFunctionDeclaration : public NStatement {
 				if(c==NULL) err=true;
 			}
 			block->typeChk(t,x);
-			cerr<<x<<err<<endl;
+			//cerr<<x<<err<<endl;
 			if(err) return NULL;
 			return t.lookupType("void");
 		}
+
+        int addSymtable(Symtable& t){
+            bool err=false;
+            TType* ret = t.lookupType(type.name);
+            if(ret==NULL){
+                cerr << "Error in function declaration " << id.name << " type " << ret->name << " does not exist" << endl;
+                err=true;
+            }
+            std::vector<TType*>* arguments = new vector<TType*>();
+            int i;
+            TType* c;
+            for(i=0; i<args.size(); i++){
+                c = t.lookupType(args[i]->type.name);
+                if(c==NULL){
+                    err=true;
+                    cerr << "Error in function declaration " << id.name << " type " << args[i]->type.name << " does not exist" << endl;
+                }
+                arguments->push_back(c);
+            }
+            if(err){
+             return 1;
+            }
+            TFunc* f = new TFunc(id.name,ret,arguments);
+            if(!t.insertfun(f))
+                return 2;
+            else
+                return 0;
+        }
 			
 };
 
@@ -419,8 +466,6 @@ class NFor : public NStatement{
 		NBlock& block;
 		NFor(NIdentifier& id,NExpression* beg,NExpression* end,NBlock& block): id(id),beg(beg),end(end),block(block){};
 		NFor(NIdentifier& id,NIdentifier* array,NBlock &block): id(id),array(array),block(block){};
-		
-		
 
 };
 
@@ -436,7 +481,6 @@ class NReturn : public NStatement{
 		NExpression* expr;
 		NReturn(){}
 		NReturn(NExpression *expr):expr(expr){}
-
 		TType* typeChk(Symtable& t,TType* expected = NULL){
 			TType* s=expr->typeChk(t);
 			cerr<<s->name<<expected->name<<endl;
@@ -452,7 +496,6 @@ class NAssignment : public NStatement{
 		NExpression* assig;
 		NAssignment (NLRExpression * var, NExpression *assigment):var(var),assig(assigment){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
-			cout<<"asdf"<<endl;
 			TType* varT = var->typeChk(t);
 			TType* assigT = assig->typeChk(t);
 			if (varT == NULL || assigT == NULL){

@@ -122,7 +122,11 @@ var_decl	: ident ident {
 fun_decl	: fun_firm block {$1->block = $2;$$ = $1;}
 			;
 
-fun_firm	: ident ident fun_decl_args 	{$$ = new NFunctionDeclaration(*$1,*$2,*$3);} 
+fun_firm	: ident ident fun_decl_args 	{$$ = new NFunctionDeclaration(*$1,*$2,*$3);
+                                                if($$->addSymtable(Table)==2)
+                                                cerr<<"Function `"<< $$->id.name<< "` was declare before. l"
+                                                <<@2.first_line<<",c"<<@2.first_column<<"-l"<<
+                                                @2.first_line<<",c"<<@2.first_column<<endl;} 
 
 arr_decl    : ARRAY expr ident ident {$$ = new NArrayDeclaration(*$4,*$3,*$2);}
             | ARRAY expr ident ident '=' '['expr_lst']' {$$ = new NArrayDeclaration(*$4,*$3,*$2,*$7);}

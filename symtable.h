@@ -35,11 +35,11 @@ class TElement {
 
 class TType: public TElement {
 	public:
-		const string name;
-		const unsigned long size;
-		const bool numeric;
-		const bool basic;
-		const bool struc;
+		string name;
+		unsigned long size;
+		bool numeric;
+		bool basic;
+		bool struc;
 		TType(string name,unsigned long size,bool basic=false, bool numeric=false, bool struc=false):name(name),size(size),basic(basic),numeric(numeric),struc(struc){};
 };
 
@@ -73,9 +73,10 @@ class TVar: public TElement{
 
 class TFunc: public TElement{
 	public:
-		TType& type;
-		const std::vector<TType*> args;
-		TFunc(TType& type, std::vector<TType*> args):type(type),args(args){}
+        string name;
+		TType* type;
+		std::vector<TType*>* args;
+		TFunc(string name, TType* type, std::vector<TType*>* args):name(name),type(type),args(args){}
 };
 
 class TArray: public TElement{
@@ -98,11 +99,24 @@ namespace __gnu_cxx{
                 return sum+s.scope;
             }
     };
+
+    template<> class hash<string>{
+        public:
+            size_t operator()(const string &s) const { 
+                int i;
+                int sum=0;
+                for(i=0; i<s.size(); i++){
+                    sum=sum+s[i]*(int)(pow(31,s.size()-i+1));
+                }
+                return sum;
+            }
+    };
 };
 
 
 class Symtable {
 	hash_map<tuple,TElement*> table;
+	hash_map<string,TFunc*> funtable;
 	list<int> scopeStack;
 	int scope;
 	int nextscope;
@@ -114,11 +128,36 @@ class Symtable {
 			table[tuple(string("boolean"),scope)]=new TType("boolean",sizeof(bool),true);
 			table[tuple(string("void"),scope)]=new TType("void",0,true);
 			table[tuple(string("string"),scope)]=new TType("string",0,true);
+            
 		}
 		
 		
 		int insert(string& name,TElement* elem){
 			table[tuple(name,scope)]=elem;
+		}
+
+		bool insertfun(TFunc* fun){
+			hash_map<string,TFunc*>::iterator it;
+            string key = string(fun->name);
+            int i;
+            for(i=0; i<fun->args->size(); i++){
+                key += fun->args->at(i)->name;
+            }
+
+            it=funtable.find(key);
+			if(it==funtable.end()){
+			    funtable[key]=fun;
+			}else{
+                //cerr << "Function `" <<key<< "` was declare before." << endl;
+                return false;
+            }
+           
+            #ifdef DEBUG
+            cout << "inserting key " << key << endl; 
+            #endif
+            funtable[key]=fun;
+            return true;
+
 		}
 
         int insrtnextscope(string& name, TElement* elem){
@@ -145,25 +184,24 @@ class Symtable {
 			return it->second;
 		}
 		
-		TFunc* lookupFunc(const string name){
-			tuple t(name,scope);
-			hash_map<tuple,TElement*>::iterator it;
-			it=table.find(t);
-			if(it==table.end()){
-				list<int>::iterator lit;
-				for(lit = scopeStack.begin();lit!=scopeStack.end();lit++){
-					t=tuple(name,*lit);
-					it=table.find(t);
-					if(!(it==table.end())){
-						break;
-					}
-				}
+		TFunc* lookupFunc(const string name, const std::vector<TType*> args){
+			hash_map<string,TFunc*>::iterator it;
+            string key = string(name);
+            int i;
+            for(i=0; i<args.size(); i++){
+                key += args[i]->name;
+            }
+            #ifdef DEBUG
+            cout << "key buscando " << key << endl; 
+            #endif
+			it=funtable.find(key);
+			if(it==funtable.end()){
+			    return NULL;	
 			}
-			if(it==table.end()){
-				return NULL;
-			}
-			return (TFunc*)it->second;
+			
+			return it->second;
 		}
+
         TType* lookupType(const string name){
             tuple t(name,0);
             hash_map<tuple,TElement*>::iterator it;
