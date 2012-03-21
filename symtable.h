@@ -189,12 +189,16 @@ class Symtable {
 		TElement* lookup(const string name){
 			tuple t(name,scope);
 			hash_map<tuple,TElement*>::iterator it;
-			cerr<<"trying "<<name <<scope<<endl;
+#ifdef DEBUG
+			cerr<<"searching "<<name <<scope<<endl;
+#endif
 			it=table.find(t);
 			if(it==table.end()){
 				list<int>::iterator lit;
 				for(lit = scopeStack.begin();lit!=scopeStack.end();lit++){
-					cerr<<"trying "<<name <<*lit<<endl;
+#ifdef DEBUG
+					cerr<<"searching "<<name <<*lit<<endl;
+#endif
 					t=tuple(name,*lit);
 					it=table.find(t);
 					if(!(it==table.end())){
@@ -203,8 +207,14 @@ class Symtable {
 				}
 			}
 			if(it==table.end()){
+#ifdef DEBUG
+						cerr<<"NOT FOUND!"<<endl;
+#endif
 				return NULL;
 			}
+#ifdef DEBUG
+						cerr<<"found "<<name<<*lit<<endl;
+#endif
 			return it->second;
 		}
 		

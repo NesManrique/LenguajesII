@@ -152,7 +152,9 @@ class NStructAccess : public NLRExpression{
 		TType* typeChk(Symtable& t,TType* expected = NULL){
 			TStructured* temp = (TStructured*)lexpr.typeChk(t);
 			if (temp == NULL) return NULL;
+#ifdef DEBUG			
 			cerr<<"lexpr is a(n) "<<temp->name<<" "<<temp->struc<<temp->numeric<<temp->basic<<endl;
+#endif
 			if (!temp->struc) {
 				cerr << temp->name<< " is not a struct or union"<<endl;
 				return NULL;
@@ -265,7 +267,8 @@ class NBlock: public NStatement{
 			TType* s;
 			for(int i=0;i<statements.size();i++){
 				s=statements[i]->typeChk(t,expected);
-				if(s==NULL && !err){
+				if(s==NULL){
+					cerr<<"error in the statement "<<i+1<<" of block"<<endl;
 					err=true;
 				}
 			}
@@ -281,6 +284,12 @@ class NVarrayDeclaration : public NStatement{
 		NIdentifier& type;
 		bool array;
 		NVarrayDeclaration(NIdentifier &id,NIdentifier& type,bool array=false):id(id),type(type),array(array){}
+		virtual TType* typeChk(Symtable& t,TType* expected = NULL){
+#ifdef DEBUG
+			cerr<<"TypeCHK:default"<<endl;
+#endif
+			return t.lookupType("void");
+		}
 };
 
 
@@ -289,6 +298,9 @@ class NVariableDeclaration : public NVarrayDeclaration {
 		NExpression *assigment;
 		NVariableDeclaration(NIdentifier& type,NIdentifier& id,NExpression* assignment=NULL):NVarrayDeclaration(id,type),assigment(assignment){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
+#ifdef DEBUG
+			cerr<<"TypeCHK:VarDeclaration "<<id.name<<type.name<<assigment<<endl;
+#endif
 			TType* t1 = t.lookupType(type.name);
 			if(t1==NULL) {
 				cerr<<"Type "<<type.name<<" not defined"<<endl;	
@@ -306,6 +318,9 @@ class NVariableDeclaration : public NVarrayDeclaration {
 				}
 				
 			}
+#ifdef DEBUG
+			cerr<<t1->name<<endl;
+#endif
 			return t1;
 		}
 };
@@ -420,11 +435,13 @@ class NRegisterDeclaration : public NStatement{
 			for (int i=0;i<fields.size();i++){
 				temp = fields[i]->typeChk(t);
 				if(temp == NULL){
+					cerr<<"error in the declaration"<<i+1<<" of register "<<type.name<<endl;
+					
 					err = true;
 				}
 			}
 			t.endScope();
-			if (!err) {
+			if (err) {
 				cerr << "Error in register "<<type.name<<" declaration"<<endl;
 				return NULL;
 			}
@@ -442,7 +459,9 @@ class NRegisterDeclaration : public NStatement{
 					reg->addField(&vars->type,vars->name);
 				}
 			}
+#ifdef DEBUG
 			cout<<"inserting "<<type.name<<endl;
+#endif
 			t.insertType(type.name,reg);
 			
 			return 0;
@@ -455,20 +474,26 @@ class NUnionDeclaration : public NStatement{
 		VariableList fields;
 		NUnionDeclaration(NIdentifier& type, VariableList fields) :type(type), fields(fields){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
+			t.begScope();
 			bool err=false;
+			TType* temp;
 			for (int i=0;i<fields.size();i++){
-				if(fields[0]->typeChk(t) == NULL && !err){
+				temp = fields[i]->typeChk(t);
+				if(temp == NULL){
+					cerr<<"error in the declaration"<<i+1<<" of union "<<type.name<<endl;
+					
 					err = true;
 				}
 			}
-			if (!err) {
-				cerr<<"Error in union "<<type.name<<" declaration"<<endl;
+			t.endScope();
+			if (err) {
+				cerr << "Error in union "<<type.name<<" declaration"<<endl;
 				return NULL;
 			}
 			return t.lookupType("void");
 		}
         
-		int addSymtable(Symtable& t){
+		int addToSymtable(Symtable& t){
             bool err=false;
 			TVar* vars;
 			TRegister* reg=new TRegister(type.name);
@@ -479,6 +504,9 @@ class NUnionDeclaration : public NStatement{
 					reg->addField(&vars->type,vars->name);
 				}
 			}
+#ifdef DEBUG
+			cout<<"inserting "<<type.name<<endl;
+#endif
 			t.insertType(type.name,reg);
 			
 			return 0;
