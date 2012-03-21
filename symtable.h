@@ -1,4 +1,3 @@
-
 #ifndef SYMTABLE
 #include <cstdio>
 #include <hash_map>
@@ -28,7 +27,6 @@ class tuple{
 class TElement {
 	public:
 		string name;
-		bool type;
 		bool arr;
 		virtual ~TElement(){};
 };
@@ -40,7 +38,16 @@ class TType: public TElement {
 		bool numeric;
 		bool basic;
 		bool struc;
+        TType();
 		TType(string name,unsigned long size,bool basic=false, bool numeric=false, bool struc=false):name(name),size(size),basic(basic),numeric(numeric),struc(struc){};
+
+        bool operator==(const TType &t2)const{
+            return name == t2.name;
+        }
+        
+        bool operator!=(const TType &t2)const{
+            return !(*this == t2);
+        }
 };
 
 class Field{
@@ -79,11 +86,39 @@ class TFunc: public TElement{
 		TFunc(string name, TType* type, std::vector<TType*>* args):name(name),type(type),args(args){}
 };
 
-class TArray: public TElement{
+class TArray: public TType{
 	public:
 		TType& type;
 		int length;
-		TArray(TType& type, int length):type(type),length(length){}
+        TArray(TType& type):type(type){}
+		TArray(TType& type, int length):type(type),length(length){
+            arr = true;
+        }
+        TArray(TType& typ, ExpressionList lengths){
+            int = vector.back();
+            vector.pop_back();
+            if(lengths.size()>0){
+                type = new TArray(typ,vector);
+            }else if(lengths.size()==0){
+                type = typ;
+            }
+        }
+
+        /*bool operator==(const TType &t2)const{
+            if(t2.arr){
+                return this->type == (const_cast<TArray*>(t2)).type && this->length == (const_cast<TArray>(t2)).length;
+            }else
+                return false;
+        }*/
+
+        bool operator==(const TArray &t2)const{
+            return type == t2.type && length == t2.length;
+        }
+
+        
+        bool operator!=(const TArray &t2)const{
+            return !(*this == t2);
+        }
 };
 
 namespace __gnu_cxx{

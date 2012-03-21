@@ -19,7 +19,7 @@ Symtable Table;
 
 %union{
 	Node *node;
-	NBlock	*block;
+	NBlock *block;
 	NExpression *expr;
 	NStatement *stmt;
 	NIdentifier	*ident;
@@ -30,6 +30,7 @@ Symtable Table;
 	NArrayAccess *arr_access;
 	NRegisterDeclaration *reg_decl;
 	NUnionDeclaration *union_decl;
+    NArray *cons_arr;
 	std::vector<NVariableDeclaration*> *varvec;
 	std::vector<NExpression*> *exprvec;
 	std::string *string;
@@ -55,15 +56,16 @@ Symtable Table;
 %token	<string> ID
 
 /* Type of node our nonterminal represent */
-%type	<expr>	expr fun_call 
-%type 	<lrexpr>	lrexpr
+%type	<expr>	expr fun_call
+%type 	<lrexpr> lrexpr
 %type	<ident>	ident
 %type	<varvec> fun_decl_args var_decls fun_decl_args_list
-%type	<exprvec>	fun_call_args expr_lst /*array_elem*/
+%type	<exprvec> fun_call_args expr_lst
 %type	<block>	program stmts block decls 
 %type 	<fun_decl> fun_firm
 %type	<stmt>	stmt var_decl fun_decl reg_decl arr_decl ctrl_for
 %type	<stmt>	union_decl ctrl_while ctrl_if var_asgn
+%type   <cons_arr> cons_arr arr_lst
 /*%type	<token>	comparison*/
 
 /* Matematical operators precedence */
@@ -128,8 +130,14 @@ fun_firm	: ident ident fun_decl_args 	{$$ = new NFunctionDeclaration(*$1,*$2,*$3
                                                 <<@2.first_line<<",c"<<@2.first_column<<"-l"<<
                                                 @2.first_line<<",c"<<@2.first_column<<endl;} 
 
-arr_decl    : ARRAY expr ident ident {$$ = new NArrayDeclaration(*$4,*$3,*$2);}
-            | ARRAY expr ident ident '=' '['expr_lst']' {$$ = new NArrayDeclaration(*$4,*$3,*$2,*$7);}
+arr_decl    : ARRAY cons_arr ident ident {$$ = new NArrayDeclaration(*$4,*$3,*$2);
+                                        TType* t;
+                                        t=$2->typeChk(Table);
+                                            cout << "tipo " << t->name << endl;
+                                        //if(t!=NULL){
+                                       // }
+                                    }
+            | ARRAY cons_arr ident ident '=' arr_lst {$$ = new NArrayDeclaration(*$4,*$3,*$2,*$6);}
 
 union_decl	: UNION ident '{' var_decls '}' {$$ = new NUnionDeclaration(*$2,*$4);}
             | UNION ident '{' error '}' {fprintf(stderr, 
@@ -179,7 +187,7 @@ fun_decl_args_list: var_decl {$$ = new VariableList();$$->push_back($<var_decl>1
 ident		: ID {$$ = new NIdentifier(*$1);}
 
 
-expr		: lrexpr{$$ = $<expr>1;} 
+expr		: lrexpr{$$ = $<expr>1;}
 			| INT	{$$ = new NInteger($1);}
 			| FLOAT	{$$ = new NDouble($1);}
 			| STR 	{$$ = new NString(*$1);}
@@ -227,6 +235,16 @@ lrexpr		: ident	{ if(Table.lookup($1->name)!=NULL){
 fun_call_args : '(' ')' {$$= new ExpressionList();}
 			| '(' expr_lst ')' {$$=$2;}
 			;	
+
+cons_arr    : '[' expr_lst ']' {$$ = new NArray(*$2);}
+            ;
+
+arr_lst     : cons_arr {$$ = $1;}
+            | '['arr_lst ',' cons_arr']' {$$ = new NArray();
+                                            $$->add($4);
+                                            $$->add($2);}
+            | arr_lst error cons_arr {}
+            ;
 	
 expr_lst    : expr {$$=new ExpressionList();$$->push_back($1);}
 			| expr_lst ',' expr {$$->push_back($3);}
@@ -280,6 +298,7 @@ ctrl_while	: WHILE expr DO block {$$ = new NWhileDo($2,*$4);}
 
 ctrl_for	: FOR ident FROM expr TO expr block {$$ = new NFor(*$2,$4,$6,*$7);}
 			| FOR ident IN ident block {$$ = new NFor(*$2,$4,*$5);}
+			| FOR ident IN cons_arr block {$$ = new NFor(*$2,*$4,*$5);}
 			;
 
 var_asgn	: lrexpr '=' expr {$$ = new NAssignment($1,$3); }

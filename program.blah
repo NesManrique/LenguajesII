@@ -4,7 +4,10 @@ char d is #$.
 boolean b is true.
 float a is 5.6.
 
-
+arrayof [10] integer a.
+arrayof [10][20][35] char k.
+arrayof [3] boolean bo = [true,false,true].
+/*
 integer e is s.
 
 boolean prueba(integer a, char z){
@@ -24,4 +27,4 @@ integer main(){
     boolean y = prueba(1,#t).
     boolean w = prueba().
 	return 0 .
-}
+}*/

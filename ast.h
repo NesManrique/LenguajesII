@@ -79,20 +79,28 @@ class NString : public NExpression {
 class NArray : public NExpression {
 	public :
 		ExpressionList values;
-		NArray() { }
+		NArray(){}
+		NArray(ExpressionList values):values(values){}
+        void add(NArray* arr){
+            values.push_back(arr);
+        }
 		TType* typeChk(Symtable& t,TType* expected = NULL){
             bool err=false;
-            TType* first=values[0]->typeChk(t);
+
+            TType* elem = values[0]->typeChk(t);
+
             for(int i=1; i<values.size(); i++){
-                if(first->name != values[i]->typeChk(t)->name)
+                if(elem != values[i]->typeChk(t))
                     err=true;
             }
+
             if(err){
-                fprintf(stderr, "Array elements are not the same type.");
+                fprintf(stderr, "Array elements are not the same type.\n");
                 return NULL;
             }else{
-                return NULL;//arreglo de tipo first;
+                return elem;
             }
+        
         }
 };
 
@@ -349,38 +357,65 @@ class NArrayDeclaration : public NStatement{
 	public:
 		NIdentifier& id;
 		NIdentifier& type;
-        NExpression& size;
-		ExpressionList elements;
+        NArray& size;
+		NArray& elements;
 		NArrayDeclaration(NIdentifier& id, NIdentifier& type,
-				NExpression& size) :
-			id(id), type(type), size(size), elements(*(new ExpressionList())){}
+				NArray& size) :
+			id(id), type(type), size(size), elements(*(new NArray())){}
 
 		NArrayDeclaration(NIdentifier& id, NIdentifier& type,
-				NExpression& size, ExpressionList& elements) :
+				NArray& size, ExpressionList& elements) :
+			id(id), type(type), size(size), elements(*(new NArray(elements))){}
+
+        NArrayDeclaration(NIdentifier& id, NIdentifier& type,
+				NArray& size, NArray& elements) :
 			id(id), type(type), size(size), elements(elements){}
 
+        int addSymtable(t){
+            TType* typ = t.lookupType(type.name);
+            TType* na = t.lookup(id.name);
+            TType* nam = new TType();
+            nam->name = type.name;
+            TArray arr = new TArray(nam,size->values);
+
+            if(typ==NULL){
+                cerr << "Error in array declaration. Type " << type.name <<  " does not exist." <<endl;
+                return 1; 
+            }else if(na==){
+                cerr << "Error array " << id.name << " already exists." << endl;
+                return 1;
+            }
+
+            
+        }
+
 		TType* typeChk(Symtable& t,TType* expected = NULL){
+
+            cout <<"beginnig arr typechk "<<endl;
             TType* s = size.typeChk(t);
             TType* x = type.typeChk(t);
-            bool err=false;
+            TType* el = elements.typeChk(t);
 
             if(x == NULL){
-                fprintf(stderr, "Array elements are not the same type.");
+                fprintf(stderr, "Array elements are not the same type.\n");
                 return NULL;
             }else if(s->name!="integer"){
-                fprintf(stderr, "Array size expression is not an integer.");
+                fprintf(stderr, "Array size expression is not an integer.\n");
+                return NULL;
+            }else if(el==NULL){
+                fprintf(stderr, "Array elements are not the same type as array type declaration.\n");
+                return NULL;
+            }else if(x->name!=el->name){
+                fprintf(stderr, "Array type is not the same type as array elements.\n");
                 return NULL;
             }
 
-            for(int i=0; i<elements.size(); i++){
+            /*for(int i=0; i<elements.size(); i++){
                 if(x->name != elements[i]->typeChk(t)->name)
                     err=true;
-            }
+            }*/
 
-            if(err){
-                fprintf(stderr, "Array elements are not the same type as array type declaration.");
-                return NULL;
-            }
+            return x;
             
         }
 };
@@ -454,9 +489,11 @@ class NFor : public NStatement{
 		NExpression* beg;
 		NExpression* end;
 		NIdentifier* array;
+        NArray& cons_arr;
 		NBlock& block;
-		NFor(NIdentifier& id,NExpression* beg,NExpression* end,NBlock& block): id(id),beg(beg),end(end),block(block){};
-		NFor(NIdentifier& id,NIdentifier* array,NBlock &block): id(id),array(array),block(block){};
+		NFor(NIdentifier& id,NExpression* beg,NExpression* end,NBlock& block): id(id),beg(beg),end(end),cons_arr(*(new NArray())),block(block){};
+		NFor(NIdentifier& id,NIdentifier* array,NBlock &block): id(id),array(array),cons_arr(*(new NArray())),block(block){};
+		NFor(NIdentifier& id,NArray& cons_arr,NBlock &block): id(id),cons_arr(cons_arr),block(block){};
 
 };
 
