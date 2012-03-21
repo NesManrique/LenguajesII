@@ -371,22 +371,33 @@ class NArrayDeclaration : public NStatement{
 				NArray& size, NArray& elements) :
 			id(id), type(type), size(size), elements(elements){}
 
-        int addSymtable(t){
+        int addSymtable(Symtable& t){
             TType* typ = t.lookupType(type.name);
-            TType* na = t.lookup(id.name);
+            TElement* na = t.lookup(id.name);
             TType* nam = new TType();
             nam->name = type.name;
-            TArray arr = new TArray(nam,size->values);
+            TType* si = size.typeChk(t);
+
+            std::vector<long long> v = new vector<long long>();
+            for(int i=0; i<size.values.size(); i++){
+                v[i]= size.values[i].value;
+            }
+            TArray arr = new TArray(nam,size.values);
 
             if(typ==NULL){
                 cerr << "Error in array declaration. Type " << type.name <<  " does not exist." <<endl;
                 return 1; 
-            }else if(na==){
+            }else if(na!=NULL){
                 cerr << "Error array " << id.name << " already exists." << endl;
+                return 1;
+            }else if(si->type->name!="integer"){
+                cerr << "Error array dimensions must be integers." << endl;
                 return 1;
             }
 
-            
+            t.insert(id.name,arr);
+
+            return 0;
         }
 
 		TType* typeChk(Symtable& t,TType* expected = NULL){

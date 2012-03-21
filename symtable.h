@@ -89,18 +89,19 @@ class TFunc: public TElement{
 class TArray: public TType{
 	public:
 		TType& type;
-		int length;
+		long long length;
         TArray(TType& type):type(type){}
-		TArray(TType& type, int length):type(type),length(length){
+		TArray(TType& type, long long length):type(type),length(length){
             arr = true;
         }
-        TArray(TType& typ, ExpressionList lengths){
-            int = vector.back();
-            vector.pop_back();
+        TArray(TType& type, std::vector<long long> lengths):type(type),length(lengths[0]){
+            arr = true;
+            length = lengths.back();
+            lengths.pop_back();
             if(lengths.size()>0){
-                type = new TArray(typ,vector);
+                type = TArray(type,lengths);
             }else if(lengths.size()==0){
-                type = typ;
+                type = type;
             }
         }
 
