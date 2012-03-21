@@ -48,8 +48,8 @@ class NExpressionStatement : public NStatement {
 
 class NInteger : public NExpression {
 	public :
-		long long value;
-		NInteger(long long value) : value(value) {}
+		int value;
+		NInteger(int value) : value(value) {}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
 #ifdef DEBUG
 			cerr<<"TypeCHK:integer "<<value<<endl;
@@ -372,17 +372,9 @@ class NArrayDeclaration : public NStatement{
 			id(id), type(type), size(size), elements(elements){}
 
         int addSymtable(Symtable& t){
-            TType* typ = t.lookupType(type.name);
             TElement* na = t.lookup(id.name);
-            TType* nam = new TType();
-            nam->name = type.name;
+            TType* typ = t.lookupType(type.name);
             TType* si = size.typeChk(t);
-
-            std::vector<long long> v = new vector<long long>();
-            for(int i=0; i<size.values.size(); i++){
-                v[i]= size.values[i].value;
-            }
-            TArray arr = new TArray(nam,size.values);
 
             if(typ==NULL){
                 cerr << "Error in array declaration. Type " << type.name <<  " does not exist." <<endl;
@@ -390,12 +382,19 @@ class NArrayDeclaration : public NStatement{
             }else if(na!=NULL){
                 cerr << "Error array " << id.name << " already exists." << endl;
                 return 1;
-            }else if(si->type->name!="integer"){
+            }else if(si->arr && ((TArray *)si)->type.name!="integer"){
                 cerr << "Error array dimensions must be integers." << endl;
                 return 1;
             }
 
-            t.insert(id.name,arr);
+            TArray* t1 = new TArray(*typ,((NInteger*)size.values.back())->value);
+            typ = t1;
+            for(int i=size.values.size()-2; i>=0;i--){
+                t1 = new TArray(*typ,((NInteger*)size.values[i])->value);
+                typ = t1;
+            }
+
+            t.insert(id.name,typ);
 
             return 0;
         }
