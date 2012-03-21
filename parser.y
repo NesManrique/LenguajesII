@@ -11,7 +11,7 @@ void yyerror(char const *s, ...);
 
 NBlock *ProgramAST;
 bool flagerror=false;
-int flagfdecl=1;
+int flagfdecl=0;
 Symtable Table;
 %}
 
@@ -30,7 +30,7 @@ Symtable Table;
 	NArrayAccess *arr_access;
 	NRegisterDeclaration *reg_decl;
 	NUnionDeclaration *union_decl;
-	std::vector<NVariableDeclaration*> *varvec;
+	std::vector<NVarrayDeclaration*> *varvec;
 	std::vector<NExpression*> *exprvec;
 	std::string *string;
 	int token;
@@ -62,8 +62,10 @@ Symtable Table;
 %type	<exprvec>	fun_call_args expr_lst /*array_elem*/
 %type	<block>	program stmts block decls 
 %type 	<fun_decl> fun_firm
-%type	<stmt>	stmt var_decl fun_decl reg_decl arr_decl ctrl_for
-%type	<stmt>	union_decl ctrl_while ctrl_if var_asgn
+%type 	<reg_decl> reg_decl
+%type	<union_decl> union_decl
+%type	<stmt>	stmt var_decl fun_decl arr_decl ctrl_for
+%type	<stmt>	ctrl_while ctrl_if var_asgn
 /*%type	<token>	comparison*/
 
 /* Matematical operators precedence */
@@ -92,8 +94,7 @@ decls		: decl	{$$ = new NBlock();
                             $$ = new NBlock();}
 			;
 
-decl		: var_decl '.'
-			| arr_decl '.'
+decl		: varr_decl '.'
 			| reg_decl 
 			| union_decl 
 			| fun_decl
@@ -104,18 +105,28 @@ decl		: var_decl '.'
 
 			;
 
+varr_decl	: var_decl
+			| arr_decl
+			;
+
 var_decl	: ident ident {
                             TElement * t;
                             $$ = new NVariableDeclaration(*$1,*$2);
                             if((t=Table.lookupType($1->name))!=NULL){
-                                Table.insert($2->name,new TVar(*((TType *)t)));
-                             }
+#ifdef DEBUG
+								cerr<<" inserting variable "<< $2->name<<" as "<<$1->name<<endl;
+#endif
+                                Table.insert($2->name,new TVar($2->name,*((TType *)t)));
+                             }else{
+								 flagerror=1;
+								cerr<<$1->name<<" does not name a type"<<endl;
+							 }
                           }
 			| ident ident '=' expr {$$ = new NVariableDeclaration(*$1,*$2,$4);
                                     TElement * t;
                                     if((t=Table.lookupType($1->name))!=NULL){
                                         Table.insert($2->name,
-                                        new TVar(*((TType *)t)));}}
+                                        new TVar($1->name,*((TType *)t)));}}
             /*| ident error {}*/
 			;
 
@@ -131,16 +142,16 @@ fun_firm	: ident ident fun_decl_args 	{$$ = new NFunctionDeclaration(*$1,*$2,*$3
 arr_decl    : ARRAY expr ident ident {$$ = new NArrayDeclaration(*$4,*$3,*$2);}
             | ARRAY expr ident ident '=' '['expr_lst']' {$$ = new NArrayDeclaration(*$4,*$3,*$2,*$7);}
 
-union_decl	: UNION ident '{' var_decls '}' {$$ = new NUnionDeclaration(*$2,*$4);}
-            | UNION ident '{' error '}' {fprintf(stderr, 
+union_decl	: UNION ident beg_block var_decls end_block {$$ = new NUnionDeclaration(*$2,*$4);}
+            | UNION ident beg_block error end_block {fprintf(stderr, 
                                     "Error in union member declarations, l%d,c%d-l%d,c%d\n",
                                     @4.first_line, @4.first_column,
                                     @4.last_line, @4.last_column);}
 
 			;
 
-reg_decl	: REGISTER ident '{' var_decls '}' {$$ = new NRegisterDeclaration(*$2,*$4);}
-            | REGISTER ident '{' error '}' {fprintf(stderr, 
+reg_decl	: REGISTER ident beg_block var_decls '}' {$$ = new NRegisterDeclaration(*$2,*$4);$$->addToSymtable(Table);Table.endScope();}
+            | REGISTER ident beg_block error end_block {fprintf(stderr, 
                                     "Error in register member declarations, l%d,c%d-l%d,c%d\n",
                                     @4.first_line, @4.first_column,
                                     @4.last_line, @4.last_column);}

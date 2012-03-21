@@ -13,6 +13,7 @@ extern int yydebug;
 extern int yyparse();
 extern NBlock *ProgramAST;
 extern Symtable Table;
+extern int flagerror;
 
 
 int main(int argc, char **argv)
@@ -22,9 +23,11 @@ int main(int argc, char **argv)
 #endif
 		freopen(argv[1],"r",stdin);
 
-	    if(yyparse()==0){
+		yyparse();
+	    if(!flagerror){
             cout << "Parsing is over" << endl;
      	  	cout << "Beginning Type Check" << endl;
+			Table.resetScope();
 			cout << ProgramAST->typeChk(Table)<< endl;
  	      	cout << "Type Check Finished" << endl;
 		}

@@ -4,11 +4,11 @@
 
 class NStatement;
 class NExpression;
-class NVariableDeclaration;
+class NVarrayDeclaration;
 
 typedef std::vector<NStatement*> StatementList;
 typedef std::vector<NExpression*> ExpressionList;
-typedef std::vector<NVariableDeclaration*> VariableList;
+typedef std::vector<NVarrayDeclaration*> VariableList;
 
 
 class Node{
@@ -150,12 +150,19 @@ class NStructAccess : public NLRExpression{
 		NIdentifier &name;
 		NStructAccess(NLRExpression &lexpr,NIdentifier &name):lexpr(lexpr),name(name){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
-			TType* temp = lexpr.typeChk(t)
+			TStructured* temp = (TStructured*)lexpr.typeChk(t);
 			if (temp == NULL) return NULL;
+			cerr<<"lexpr is a(n) "<<temp->name<<" "<<temp->struc<<temp->numeric<<temp->basic<<endl;
 			if (!temp->struc) {
-				cerr << lexpr.name<< " is not a struct or union"<<endl;
-				return NULL
+				cerr << temp->name<< " is not a struct or union"<<endl;
+				return NULL;
 			}
+			TType* res = temp->accessType(name.name);
+			if (res==NULL) {
+				cerr<<"Struct " <<temp->name <<"doesn't have a element "<<name.name<<endl;
+				return NULL;
+			}
+			return res;
 		}
 };
 
@@ -253,6 +260,7 @@ class NBlock: public NStatement{
 		StatementList statements;
 		NBlock() {};
 		TType* typeChk(Symtable& t,TType* expected = NULL){
+			t.begScope();
 			bool err=false;
 			TType* s;
 			for(int i=0;i<statements.size();i++){
@@ -261,18 +269,25 @@ class NBlock: public NStatement{
 					err=true;
 				}
 			}
+			t.endScope();
 			if(err) {cerr << "error in block"<<endl;return NULL;}
             return t.lookupType("void");
 		}
 };
 
-
-class NVariableDeclaration : public NStatement {
+class NVarrayDeclaration : public NStatement{
 	public:
-		const NIdentifier& type;
 		NIdentifier& id;
+		NIdentifier& type;
+		bool array;
+		NVarrayDeclaration(NIdentifier &id,NIdentifier& type,bool array=false):id(id),type(type),array(array){}
+};
+
+
+class NVariableDeclaration : public NVarrayDeclaration {
+	public:
 		NExpression *assigment;
-		NVariableDeclaration(const NIdentifier& type,NIdentifier& id,NExpression* assignment=NULL):type(type),id(id),assigment(assignment){}
+		NVariableDeclaration(NIdentifier& type,NIdentifier& id,NExpression* assignment=NULL):NVarrayDeclaration(id,type),assigment(assignment){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
 			TType* t1 = t.lookupType(type.name);
 			if(t1==NULL) {
@@ -317,7 +332,10 @@ class NFunctionDeclaration : public NStatement {
 			}
 			block->typeChk(t,x);
 			//cerr<<x<<err<<endl;
-			if(err) return NULL;
+			if(err){
+				cerr << "Error in "<<id.name<<" declaration"<<endl;
+				return NULL;
+			}
 			return t.lookupType("void");
 		}
 
@@ -352,19 +370,17 @@ class NFunctionDeclaration : public NStatement {
 };
 
 
-class NArrayDeclaration : public NStatement{
+class NArrayDeclaration : public NVarrayDeclaration{
 	public:
-		NIdentifier& id;
-		NIdentifier& type;
         NExpression& size;
 		ExpressionList elements;
 		NArrayDeclaration(NIdentifier& id, NIdentifier& type,
 				NExpression& size) :
-			id(id), type(type), size(size), elements(*(new ExpressionList())){}
+			NVarrayDeclaration(id,type,true), size(size), elements(*(new ExpressionList())){}
 
 		NArrayDeclaration(NIdentifier& id, NIdentifier& type,
 				NExpression& size, ExpressionList& elements) :
-			id(id), type(type), size(size), elements(elements){}
+			NVarrayDeclaration(id,type,true), size(size), elements(elements){}
 
 		TType* typeChk(Symtable& t,TType* expected = NULL){
             TType* s = size.typeChk(t);
@@ -394,18 +410,76 @@ class NArrayDeclaration : public NStatement{
 
 class NRegisterDeclaration : public NStatement{
 	public:
-		const NIdentifier& type;
+		NIdentifier& type;
 		VariableList fields;
-		NRegisterDeclaration(const NIdentifier& type, VariableList fields) :type(type), fields(fields){}
+		NRegisterDeclaration(NIdentifier& type, VariableList fields) :type(type), fields(fields){}
+		TType* typeChk(Symtable& t,TType* expected = NULL){
+			t.begScope();
+			bool err=false;
+			TType* temp;
+			for (int i=0;i<fields.size();i++){
+				temp = fields[i]->typeChk(t);
+				if(temp == NULL){
+					err = true;
+				}
+			}
+			t.endScope();
+			if (!err) {
+				cerr << "Error in "<<type.name<<" declaration"<<endl;
+				return NULL;
+			}
+			return t.lookupType("void");
+		}
+        
+		int addToSymtable(Symtable& t){
+            bool err=false;
+			TVar* vars;
+			TRegister* reg=new TRegister(type.name);
+			for(int i=0;i<fields.size();i++){
+				vars = (TVar*)t.lookup(fields[i]->id.name);
+				if(vars==NULL)	cerr<<fields[i]->id.name<<" variable not declared"<<endl;
+				else {
+					reg->addField(&vars->type,vars->name);
+				}
+			}
+			cout<<"inserting "<<type.name<<endl;
+			t.insertType(type.name,reg);
+			
+			return 0;
+        }
 };
 
 class NUnionDeclaration : public NStatement{
 	public:
-		const NIdentifier& type;
+		NIdentifier& type;
 		VariableList fields;
-		NUnionDeclaration(const NIdentifier& type, VariableList fields) : type(type), fields(fields){}
+		NUnionDeclaration(NIdentifier& type, VariableList fields) :type(type), fields(fields){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
+			bool err=false;
+			for (int i=0;i<fields.size();i++){
+				if(fields[0]->typeChk(t) == NULL && !err){
+					err = true;
+				}
+			}
+			if (!err) return NULL;
+			return t.lookupType("void");
 		}
+        
+		int addSymtable(Symtable& t){
+            bool err=false;
+			TVar* vars;
+			TRegister* reg=new TRegister(type.name);
+			for(int i=0;i<fields.size();i++){
+				vars = (TVar*)t.lookup(fields[i]->id.name);
+				if(vars==NULL)	cerr<<fields[i]->id.name<<" variable not declared"<<endl;
+				else {
+					reg->addField(&vars->type,vars->name);
+				}
+			}
+			t.insertType(type.name,reg);
+			
+			return 0;
+        }
 };
 
 
@@ -485,7 +559,10 @@ class NReturn : public NStatement{
 			TType* s=expr->typeChk(t);
 			cerr<<s->name<<expected->name<<endl;
 			if(s->name==expected->name){return s;}
-			else return NULL;
+			else {
+				cerr<<"Error: returns "<<s->name<<"but function returns "<<expected->name;
+				return NULL;
+			}
 		}
 		
 };
@@ -499,6 +576,7 @@ class NAssignment : public NStatement{
 			TType* varT = var->typeChk(t);
 			TType* assigT = assig->typeChk(t);
 			if (varT == NULL || assigT == NULL){
+				cerr<<"TypeError on assignment"<<endl;
 				return NULL;
 			} else if (varT->name!=assigT->name){
 				fprintf(stderr,"The assignment  expects a %s but received a %s\n",varT->name.c_str(),assigT->name.c_str());

@@ -11,6 +11,10 @@ register ASDF{
 
 integer e is s.
 
+register ASD{
+	integer a
+}
+
 boolean prueba(integer a, char z){
     return true.
 }
@@ -19,13 +23,13 @@ boolean prueba(){
     return false.
 }
 
-boolean prueba(){
-    return true.
-}
 
 integer main(){
 
     boolean y = prueba(1,#t).
-    boolean w = prueba().
+    ASDF a.
+	integer s is a->a.
+	s=a->a.
+	s=a->c.
 	return 0 .
 }
