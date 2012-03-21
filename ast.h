@@ -425,7 +425,7 @@ class NRegisterDeclaration : public NStatement{
 			}
 			t.endScope();
 			if (!err) {
-				cerr << "Error in "<<type.name<<" declaration"<<endl;
+				cerr << "Error in register "<<type.name<<" declaration"<<endl;
 				return NULL;
 			}
 			return t.lookupType("void");
@@ -461,7 +461,10 @@ class NUnionDeclaration : public NStatement{
 					err = true;
 				}
 			}
-			if (!err) return NULL;
+			if (!err) {
+				cerr<<"Error in union "<<type.name<<" declaration"<<endl;
+				return NULL;
+			}
 			return t.lookupType("void");
 		}
         
@@ -553,10 +556,12 @@ class NNext : public NStatement{
 class NReturn : public NStatement{
 	public:
 		NExpression* expr;
-		NReturn(){}
+		NReturn():expr(NULL){}
 		NReturn(NExpression *expr):expr(expr){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
-			TType* s=expr->typeChk(t);
+			TType* s;
+			if (expr != NULL)s=expr->typeChk(t);
+			else s=t.lookupType("void");
 			cerr<<s->name<<expected->name<<endl;
 			if(s->name==expected->name){return s;}
 			else {
