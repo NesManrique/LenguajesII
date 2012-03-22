@@ -4,9 +4,14 @@ char d is #$.
 boolean b is true.
 float a is 5.6.
 
-arrayof [10] integer a.
-//arrayof [10][20][35] char k.
-//arrayof [3] boolean bo = [true,false,true].
+arrayof [10] char z.
+arrayof [10,20,35] char k.
+arrayof [3] boolean bo is [true,false,true].
+//arrayof [2,2] boolean asd = [[true,false],[true,true]].
+//arrayof [3] boolean asdf = [true,1,true].
+//arrayof [true] boolean asdf = [true].
+
+
 /*
 register ASDF{
 	integer a,

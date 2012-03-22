@@ -134,7 +134,7 @@ class TArray: public TType{
 	public:
 		TType& type;
 		int length;
-		TArray(TType& type, int length):TType("array",type.size*length,false,false,false,true),type(type),length(length){}
+		TArray(TType& typ, int length):TType("array",typ.size*length,false,false,false,true),type(typ),length(length){}
 
 
         /*bool operator==(const TType &t2)const{
@@ -216,14 +216,14 @@ class Symtable {
 			tuple t(name,scope);
 			hash_map<tuple,TElement*>::iterator it;
 #ifdef DEBUG
-			cerr<<"searching "<<name <<scope<<endl;
+			cerr<<"searching "<<name <<" "<<scope<<endl;
 #endif
 			it=table.find(t);
 			if(it==table.end()){
 				list<int>::iterator lit;
 				for(lit = scopeStack.begin();lit!=scopeStack.end();lit++){
 #ifdef DEBUG
-					cerr<<"searching "<<name <<*lit<<endl;
+					cerr<<"searching "<<name << " "<<*lit<<endl;
 #endif
 					t=tuple(name,*lit);
 					it=table.find(t);
@@ -245,7 +245,7 @@ class Symtable {
 			tuple t(name,scope);
 			hash_map<tuple,TElement*>::iterator it;
 #ifdef DEBUG
-			cerr<<"searching "<<name <<scope<<endl;
+			cerr<<"searching "<<name << " " <<scope<<endl;
 #endif
 			it=table.find(t);
 			

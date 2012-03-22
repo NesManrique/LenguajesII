@@ -143,19 +143,18 @@ fun_firm	: ident ident fun_decl_args 	{$$ = new NFunctionDeclaration(*$1,*$2,*$3
                                                 @2.first_line<<",c"<<@2.first_column<<endl;} 
 
 arr_decl    : ARRAY cons_arr ident ident {$$ = new NArrayDeclaration(*$4,*$3,*$2);
-                                        TType* t;
-                                        TElement* t2 = Table.lookupScope($4->name);
-                                        t=$2->typeChk(Table);
-                                            cout << "tipo " << t->name << endl;
-                                        if(t2==NULL){
-                                            cerr << "Variable already declared" <<endl;
-                                        }else if(t->name!="integer"){
-                                            cerr << "Array dimensions must be integers" <<endl;
-                                        }else{
-                                            $$->addSymtable(Table);
-                                        }
+                                        if($$->addSymtable(Table)==1)
+                                            cerr<<"Array `"<< $$->id.name<< "`. l"
+                                            <<@4.first_line<<",c"<<@4.first_column<<"-l"<<
+                                            @4.first_line<<",c"<<@4.first_column<<endl;
                                     }
-            | ARRAY cons_arr ident ident '=' arr_lst {$$ = new NArrayDeclaration(*$4,*$3,*$2,$6);}
+            | ARRAY cons_arr ident ident '=' arr_lst {$$ = new NArrayDeclaration(*$4,*$3,*$2,$6);
+                                                        if($$->addSymtable(Table)==1)
+                                                            cerr<<"Array `"<< $$->id.name<< "`. l"
+                                            <<@4.first_line<<",c"<<@4.first_column<<"-l"<<
+                                            @4.first_line<<",c"<<@4.first_column<<endl;
+
+                                                        }
 
 union_decl	: UNION ident beg_block var_decls end_block {$$ = new NUnionDeclaration(*$2,*$4);}
             | UNION ident beg_block error end_block {fprintf(stderr, 

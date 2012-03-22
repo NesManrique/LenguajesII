@@ -424,6 +424,9 @@ class NArrayDeclaration : public NVarrayDeclaration{
                 return 1;
             }
 
+            cout << "typ " << typ << endl;
+            cout << "value " << ((NInteger*)size.values.back())->value << endl;
+
             TArray* t1 = new TArray(*typ,((NInteger*)size.values.back())->value);
             typ = t1;
             for(int i=size.values.size()-2; i>=0;i--){
@@ -446,15 +449,14 @@ class NArrayDeclaration : public NVarrayDeclaration{
                 el = elements->typeChk(t);
 
             if(x == NULL){
-                fprintf(stderr, "Array elements are not the same type.\n");
+                fprintf(stderr, "Array type does not exists.\n");
                 return NULL;
             }else if(s->name!="integer"){
                 fprintf(stderr, "Array size expression is not an integer.\n");
                 return NULL;
             }else if(elements!=NULL && el==NULL){
-                fprintf(stderr, "Array elements are not the same type as array type declaration.\n");
                 return NULL;
-            }else if(el!=NULL && x->name!=el->name){
+            }else if(x!=NULL && el!=NULL && x->name!=el->name){
                 fprintf(stderr, "Array type is not the same type as array elements.\n");
                 return NULL;
             }
