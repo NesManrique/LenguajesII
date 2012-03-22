@@ -9,7 +9,6 @@
 
 using namespace __gnu_cxx;
 using namespace std;
-
 class tuple{
     public:
          string id;
@@ -22,94 +21,6 @@ class tuple{
 		return tuple(a.id,a.scope);
 	}*/
 	
-};
-
-class TElement {
-	public:
-		string name;
-		bool arr;
-		virtual ~TElement(){};
-};
-
-class TType: public TElement {
-	public:
-		string name;
-		unsigned long size;
-		bool numeric;
-		bool basic;
-		bool struc;
-        TType();
-		TType(string name,unsigned long size,bool basic=false, bool numeric=false, bool struc=false):name(name),size(size),basic(basic),numeric(numeric),struc(struc){};
-
-        bool operator==(const TType &t2)const{
-            return name == t2.name;
-        }
-        
-        bool operator!=(const TType &t2)const{
-            return !(*this == t2);
-        }
-};
-
-class Field{
-	public:
-		TType* type;
-		string& name;
-		Field(TType* type,string& name):type(type),name(name){}
-};
-
-class TRegister: public TType{
-	public:
-		std::vector<Field*> fields;
-		TRegister(string name,unsigned long size,std::vector<Field*> fields):TType(name,size),fields(fields){}
-
-};
-
-class TUnion: public TType{
-	public:
-		std::vector<Field*> fields;
-		TUnion(string name,unsigned long size,std::vector<Field*> fields):TType(name,size),fields(fields){}
-
-};
-
-
-class TVar: public TElement{
-	public:
-		TType& type;
-		TVar(TType& type):type(type){}
-};
-
-class TFunc: public TElement{
-	public:
-        string name;
-		TType* type;
-		std::vector<TType*>* args;
-		TFunc(string name, TType* type, std::vector<TType*>* args):name(name),type(type),args(args){}
-};
-
-class TArray: public TType{
-	public:
-		TType& type;
-		int length;
-        TArray(TType& type):type(type){}
-		TArray(TType& type, int length):type(type),length(length){
-            arr = true;
-        }
-
-        /*bool operator==(const TType &t2)const{
-            if(t2.arr){
-                return this->type == (const_cast<TArray*>(t2)).type && this->length == (const_cast<TArray>(t2)).length;
-            }else
-                return false;
-        }*/
-
-        bool operator==(const TArray &t2)const{
-            return type == t2.type && length == t2.length;
-        }
-
-        
-        bool operator!=(const TArray &t2)const{
-            return !(*this == t2);
-        }
 };
 
 namespace __gnu_cxx{
@@ -139,6 +50,111 @@ namespace __gnu_cxx{
     };
 };
 
+class TElement {
+	public:
+		string name;
+		bool istype;
+		bool isarr;
+		TElement(string name,bool type=false,bool arr=false):name(name),istype(type),isarr(arr){};
+		virtual ~TElement(){};
+};
+
+class TType: public TElement {
+	public:
+		unsigned long size;
+		bool numeric;
+		bool basic;
+		bool struc;
+
+		TType(string name,unsigned long size,bool basic=false, bool numeric=false, bool struc=false,bool arr=false):TElement(name,true,arr),size(size),basic(basic),numeric(numeric),struc(struc){};
+
+        bool operator==(const TType &t2)const{
+            return name == t2.name;
+        }
+        
+        bool operator!=(const TType &t2)const{
+            return !(*this == t2);
+        }
+
+};
+
+class Field{
+	public:
+		TType& type;
+		string& name;
+		Field(TType& type,string& name):type(type),name(name){}
+};
+
+
+class TStructured: public TType{
+	public:
+		hash_map<string,TType*> fields;
+		bool uni;
+		TStructured(string name,int size,bool uni=false):TType(name,size,true,false,true){}
+		TType* accessType(string name){
+			hash_map<string,TType*>::iterator it;
+			it=fields.find(name);
+			if(it==fields.end())return NULL;
+			return it->second;
+		}
+		virtual void addField(TType* type,string name){
+			fields[name]=type;
+			size+=type->size;
+		}
+};
+
+class TRegister: public TStructured{
+	public:
+		TRegister(string name):TStructured(name,0){};
+};
+class TUnion: public TStructured{
+	public:
+		TUnion(string name,int size):TStructured(name,size,true){}
+		void addField(TType* type,string name){
+			fields[name]=type;
+			if(size<type->size)size=type->size;
+		}
+};
+
+
+class TVar: public TElement{
+	public:
+		TType& type;
+		TVar(string name,TType& type):type(type),TElement(name){}
+};
+
+class TFunc: public TElement{
+	public:
+		TType* type;
+		std::vector<TType*>* args;
+		TFunc(string name, TType* type, std::vector<TType*>* args):TElement(name),type(type),args(args){}
+};
+
+class TArray: public TType{
+	public:
+		TType& type;
+		int length;
+		TArray(TType& type, int length):TType("array",type.size*length,false,false,false,true),type(type),length(length){}
+
+
+        /*bool operator==(const TType &t2)const{
+            if(t2.arr){
+                return this->type == (const_cast<TArray*>(t2)).type && this->length == (const_cast<TArray>(t2)).length;
+            }else
+                return false;
+        }*/
+
+        bool operator==(const TArray &t2)const{
+            return type == t2.type && length == t2.length;
+        }
+
+        
+        bool operator!=(const TArray &t2)const{
+            return !(*this == t2);
+        }
+};
+
+
 
 class Symtable {
 	hash_map<tuple,TElement*> table;
@@ -157,8 +173,14 @@ class Symtable {
             
 		}
 		
-		
+		int insertType(string& name,TType* type){
+			table[tuple(name,0)]=type;
+		}
+
 		int insert(string& name,TElement* elem){
+#ifdef DEBUG
+			cerr<<"inserted "<<name<<scope<<endl;
+#endif
 			table[tuple(name,scope)]=elem;
 		}
 
@@ -186,17 +208,23 @@ class Symtable {
 
 		}
 
-        int insrtnextscope(string& name, TElement* elem){
+        int insertnextscope(string& name, TElement* elem){
             table[tuple(name,scope+1)]=elem;
         }
 
 		TElement* lookup(const string name){
 			tuple t(name,scope);
 			hash_map<tuple,TElement*>::iterator it;
+#ifdef DEBUG
+			cerr<<"searching "<<name <<scope<<endl;
+#endif
 			it=table.find(t);
 			if(it==table.end()){
 				list<int>::iterator lit;
 				for(lit = scopeStack.begin();lit!=scopeStack.end();lit++){
+#ifdef DEBUG
+					cerr<<"searching "<<name <<*lit<<endl;
+#endif
 					t=tuple(name,*lit);
 					it=table.find(t);
 					if(!(it==table.end())){
@@ -205,11 +233,31 @@ class Symtable {
 				}
 			}
 			if(it==table.end()){
+#ifdef DEBUG
+						cerr<<"NOT FOUND!"<<endl;
+#endif
 				return NULL;
 			}
 			return it->second;
 		}
 		
+        TElement* lookupScope(const string name){
+			tuple t(name,scope);
+			hash_map<tuple,TElement*>::iterator it;
+#ifdef DEBUG
+			cerr<<"searching "<<name <<scope<<endl;
+#endif
+			it=table.find(t);
+			
+            if(it==table.end()){
+#ifdef DEBUG
+						cerr<<"NOT FOUND!"<<endl;
+#endif
+				return NULL;
+			}
+			return it->second;
+		}
+
 		TFunc* lookupFunc(const string name, const std::vector<TType*> args){
 			hash_map<string,TFunc*>::iterator it;
             string key = string(name);
@@ -241,6 +289,7 @@ class Symtable {
 
         int begScope(){scopeStack.push_front(scope);scope=nextscope;nextscope++;}
         int endScope(){scope=scopeStack.front();scopeStack.pop_front();}
+		int resetScope(){scope=0;nextscope=1;scopeStack.clear();}
 };
 #define SYMTABLE
 #endif
