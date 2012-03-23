@@ -40,7 +40,7 @@ class NExpressionStatement : public NStatement {
 		NExpressionStatement(NExpression& expr):expr(expr){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
 #ifdef DEBUG
-			cerr<<"TypeCHK:ExprStament"<<endl;
+			cerr<<"TypeCHK: ExprStament"<<endl;
 #endif
 			return expr.typeChk(t);
 		}
@@ -87,7 +87,7 @@ class NArray : public NExpression {
 		TType* typeChk(Symtable& t,TType* expected = NULL){
             bool err=false;
 
-            cout << values.size() << endl;
+            cout << "values size " << values.size() << endl;
 
             TType* elem = values[0]->typeChk(t);
 
@@ -100,6 +100,7 @@ class NArray : public NExpression {
                 fprintf(stderr, "Array elements are not the same type.\n");
                 return NULL;
             }else{
+                cout << "cons array type " << elem->name << endl;
                 return elem;
             }
         
@@ -138,6 +139,10 @@ class NIdentifier : public NLRExpression {
 		NIdentifier(std::string &name,TType* type) : name(name),symbol(type){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
 			TVar* temp= (TVar*) t.lookup(name);
+            if(temp==NULL){
+                cerr << "Variable " << name << " does not exists."<<endl;
+                return NULL;
+            }
 			return &temp->type;
 		}
 };
@@ -148,9 +153,12 @@ class NArrayAccess : public NLRExpression{
 		NExpression &index;
 		NArrayAccess(NLRExpression &lexpr, NExpression &index):lexpr(lexpr),index(index){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
-			if (index.typeChk(t)->name=="integer") return lexpr.typeChk(t);
-			fprintf(stderr,"Array index must be an integer\n");
-			return NULL;
+			if (index.typeChk(t)->name!="integer"){ 
+			    fprintf(stderr,"Array index must be an integer\n");
+                return NULL;
+            } 
+            
+            return lexpr.typeChk(t);
 		}
 };
 
@@ -276,9 +284,10 @@ class NBlock: public NStatement{
 			bool err=false;
 			TType* s;
 			for(int i=0;i<statements.size();i++){
+                cout << "statement "<< i << " " << statements[i] <<endl;
 				s=statements[i]->typeChk(t,expected);
 				if(s==NULL){
-					cerr<<"error in the statement "<<i+1<<" of block"<<endl;
+					cerr<<"error in the statement "<<i+1<<" of block."<<endl;
 					err=true;
 				}
 			}
@@ -441,12 +450,14 @@ class NArrayDeclaration : public NVarrayDeclaration{
 
 		TType* typeChk(Symtable& t,TType* expected = NULL){
 
-            cout <<"beginnig arr typechk "<<endl;
+            cout <<"beginnig arr typechk\n "<<endl;
             TType* s = size.typeChk(t);
-            TType* x = type.typeChk(t);
+            TType* x = t.lookupType(type.name);
             TType* el = NULL;
             if(elements!=NULL)
                 el = elements->typeChk(t);
+
+            cout << "x s el " << x << " " << s << " " << el << endl;
 
             if(x == NULL){
                 fprintf(stderr, "Array type does not exists.\n");
@@ -654,7 +665,7 @@ class NAssignment : public NStatement{
 	public:
 		NLRExpression* var;
 		NExpression* assig;
-		NAssignment (NLRExpression * var, NExpression *assigment):var(var),assig(assigment){}
+		NAssignment (NLRExpression* var, NExpression *assigment):var(var),assig(assigment){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
 			TType* varT = var->typeChk(t);
 			TType* assigT = assig->typeChk(t);
