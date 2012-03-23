@@ -136,14 +136,6 @@ class TArray: public TType{
 		int length;
 		TArray(TType& typ, int length):TType("array",typ.size*length,false,false,false,true),type(typ),length(length){}
 
-
-        /*bool operator==(const TType &t2)const{
-            if(t2.arr){
-                return this->type == (const_cast<TArray*>(t2)).type && this->length == (const_cast<TArray>(t2)).length;
-            }else
-                return false;
-        }*/
-
         bool operator==(const TArray &t2)const{
             return type == t2.type && length == t2.length;
         }

@@ -30,6 +30,8 @@ int main(int argc, char **argv)
 			Table.resetScope();
 			cout << ProgramAST->typeChk(Table)<< endl;
  	      	cout << "Type Check Finished" << endl;
-		}
+		}else{
+            cout << "flagerror" <<endl;
+        }
 	    return 0;
 }

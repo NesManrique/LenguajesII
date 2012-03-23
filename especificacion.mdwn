@@ -4,21 +4,20 @@
 ##Introducción
 
 Este documento explica la expecificación del lenguaje BLAH. Es un lenguaje simple, de alcance estático, imperativo, sin orientación a objetos con un
-sistema de tipos estático y similar a C/C++. El propósito del mismo está pensado para desarrollar operaciones de manipulación de strings en general y
-memeficar los archivos.
+sistema de tipos estático y similar a C/C++.
 
 ##Léxico
 
 El léxico del lenguaje está basado en el lenguaje natural. Las palabras reservadas del lenguaje, que no pueden ser usadas por el programador
 ni redefinidas son:
 
-    integer, boolean, floating, character, string, for, from, to,
+    integer, boolean, floating, char, string, for, from, to,
     while, do, if, then, else, return, stop, next, print, read,
-    register, union, array, of, true, false, function, plus, minus,
-    times, dividedby, void.
+    register, union, arrayof, true, false, plus, minus,
+    times, dividedby, void, and, or, is, not.
 
-Un identificador es una secuencia de letras, dígitos y underscores, comenzando por una letra. BLAH es sensible a la capitalización, por ejemplo, foo y FOO
-son identificadores diferentes. Tamaño máximo de los identificadores sin definir todavia.
+Un identificador es una secuencia de letras, dígitos y underscores, comenzando por una letra. BLAH es sensible a la capitalización, por ejemplo, foo y FOO 
+son identificadores diferentes.
 
 Los espacios en blanco (i.e espacios, tabs, etc) sirven para separar tokens pero de resto son ignorados. Palabras reservadas e identificadores deben
 estar separados por un espacio en blanco, o un token que no sea palabra reservada ni otro identificador. En otras palabras, `arrayofinteger` es un identificador
@@ -41,7 +40,7 @@ exponente el positivo (+) es asumido.
 
 Una secuencia de caracteres encerrada entre comillas simples constituyen un string literal, es inválido escribir comilla simple en un string de este tipo.  
 Una secuencia de caracteres entre comillas dobles requieren escapar signos especiales para tomarlos como parte de la cadena. Un string debe empezar y terminar
-en la misma línea no puede ser picado en varias líneas. Para ilustrar lo anterior:
+en la misma línea no puede ser escrito en varias líneas. Para ilustrar lo anterior:
 
     'Aunque este string está escrito para que se vea deliberadamente
     largo y ocupe más de una línea, debe empezar y terminar en la
@@ -59,7 +58,7 @@ en la misma línea no puede ser picado en varias líneas. Para ilustrar lo anter
 
 Signos de puntuación usados por el lenguaje incluyen:
 
-    + - * / % < <= > >= = == != && || ! , . [ ] ( ) { } " '
+    + - * / % < <= > >= = == != && || ! , . [ ] ( ) { } " ' /#
 
 Un comentario de una línea comienza con `//` y se extiende hasta el final de la línea. Como en C/C++, un comentario de bloque empieza por `/*` y 
 termina con `*/`. Cualquier símbolo es permitido en el comentario excepto `*/` que termina el comentario actual. Así como en C/C++ los comentarios
@@ -106,7 +105,8 @@ tipo que no sea `void`. El tipo `string` es manejado como un arreglo de
 ##Variables
 
 Las variables pueden ser declaradas de cualquier tipo base, arreglo, registro o
-unión. Variables declaradas fuera de las funciones son de alcance global.
+unión. Variables declaradas fuera de las funciones son de alcance global y pueden 
+ser inicializadas pero no pueden efectuarse asignaciones a variables en este alcance.
 Variables declaradas como parámetros formales o en el cuerpo de una función tienen alcance
 local.
 
@@ -119,7 +119,7 @@ acceder a los elementos de un arreglo desde el último hasta el primero con
 números negativos, siendo el último el indexado con -1 y el primero el indexado
 con -N. Para ilustrar:
 
-    ejemplo0 is arrayof 5 integers {a,b,c,d,e}
+    arrayof [5] char ejemplo0 is [#a,#b,#c,#d,#e].
 
 El primer elemento `a` puede ser accedido como `ejemplo[0]` o como `ejemplo[-5]`
 y el elemento `e` puede ser accedido como `ejemplo[4]` o como `ejemplo[-1]`.
@@ -128,27 +128,31 @@ Si el tamaño dispuesto para el arreglo es diferente a la cantidad de elementos 
 se generará un warning y se tomará la menor entre estas dos cantidades para inicializar
 esa cantidad de elementos. Por ejemplo:
 
-    ejemplo1 is arrayof 10 characters {a,b,c}
+    arrayof [10] char ejemplo1 is [#a,#b,#c].
 
 En ese caso se inicializará un arreglo de tamaño 10, cuyos 3 primeros elementos son `a`, `b` y `c`; el resto son null.
 
-    ejemplo2 is arrayof 3 characters {u,v,w,x,y,z}
+    arrayof [3] char ejemplo2 is [#u,#v,#w,#x,#y,#z].
 
 En ese caso se inicializará un arreglo de tamaño 3, cuyos 3 primeros elementos son `u`,`v` y ,`w`.
 
+En BLAH es posible declarar arreglos de varias dimensiones. Para ello las dimensiones
+se escriben en una arreglo de enteros de la siguiente manera:
+
+    arrayof [3,2] integer ejemplo3 is [[1,2],[3,4],[5,6]].
+    arrayof [2,3] integer ejemplo3 is [[1,2,3],[4,5,6]].
+
 ##Cadenas de Caracteres
 
-Los programas incluyen cadenas de caracteres constantes, comparar strings,
+Los programas incluyen cadenas de caracteres constantes, es posible comparar strings,
 imprimirlos, etc. Se planea añadir funciones que faciliten la manipulación de
 este tipo de datos. Las cadenas de caracteres están implementadas como arreglos
 de caracteres al estilo C/C++.
 
-*   La asignación de cadenas de caracteres es profunda/superficial.
+*   La asignación de cadenas de caracteres es superficial.
 *   Las cadenas de caracteres pueden ser pasadas como parámetros y retornadas de 
-las funciones
-*   La comparación de strings (`==` y `!==`) es sensitiva a mayúsculas.
-
-EXPANDIR PROXIMAMENTE
+las funciones.
+*   La comparación de strings (`==` y `!=`) es sensitiva a mayúsculas.
 
 ##Funciones
 
@@ -210,10 +214,15 @@ equivalentes si sus tipos poseen el mismo nombre.
 
 La asignación BLAH es una instrucción mas no es una expresión, en otras palabras, no retorna un valor. La asignación se hace mediante la palabra reservada `is` o mediante el símbolo tradicional `=`.
 
+Efectuar asignaciones en alcance global a variables declaradas o inicializadas en este mismo
+alcance no está permitido.
+
 ##Estructuras de control
 
 
 
 ##Expresiones
+
+
 ##Lo que no tiene el lenguaje
 

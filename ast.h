@@ -86,8 +86,9 @@ class NArray : public NExpression {
         }
 		TType* typeChk(Symtable& t,TType* expected = NULL){
             bool err=false;
-
+#ifdef DEBUG
             cout << "values size " << values.size() << endl;
+#endif
 
             TType* elem = values[0]->typeChk(t);
 
@@ -100,7 +101,9 @@ class NArray : public NExpression {
                 fprintf(stderr, "Array elements are not the same type.\n");
                 return NULL;
             }else{
+#ifdef DEBUG
                 cout << "cons array type " << elem->name << endl;
+#endif
                 return elem;
             }
         
@@ -284,15 +287,25 @@ class NBlock: public NStatement{
 			bool err=false;
 			TType* s;
 			for(int i=0;i<statements.size();i++){
+#ifdef DEBUG
                 cout << "statement "<< i << " " << statements[i] <<endl;
+#endif
 				s=statements[i]->typeChk(t,expected);
 				if(s==NULL){
-					cerr<<"error in the statement "<<i+1<<" of block."<<endl;
+					cerr<<"Error in the statement "<<i+1<<" of block."<<endl;
 					err=true;
 				}
 			}
 			t.endScope();
-			if(err) {cerr << "error in block"<<endl;return NULL;}
+			if(err) {
+#ifdef DEBUG
+                cerr << "error in block"<<endl;
+#endif
+                return NULL;
+            }
+#ifdef DEBUG
+            cout << "void " << t.lookupType("void") << endl;
+#endif
             return t.lookupType("void");
 		}
 };
@@ -355,7 +368,9 @@ class NFunctionDeclaration : public NStatement {
 		TType* typeChk(Symtable& t,TType* expected = NULL){
 			bool err=false;
 			TType* x=t.lookupType(type.name);
+#ifdef DEBUG
 		    cout<<"Type Function test "<<type.name<<endl;
+#endif
 			if(x==NULL){
 				cerr<<"Type "<<type.name<<" not defined"<<endl;
 			}
@@ -433,8 +448,10 @@ class NArrayDeclaration : public NVarrayDeclaration{
                 return 1;
             }
 
+#ifdef DEBUG
             cout << "typ " << typ << endl;
             cout << "value " << ((NInteger*)size.values.back())->value << endl;
+#endif
 
             TArray* t1 = new TArray(*typ,((NInteger*)size.values.back())->value);
             typ = t1;
@@ -450,14 +467,18 @@ class NArrayDeclaration : public NVarrayDeclaration{
 
 		TType* typeChk(Symtable& t,TType* expected = NULL){
 
+#ifdef DEBUG
             cout <<"beginnig arr typechk\n "<<endl;
+#endif
             TType* s = size.typeChk(t);
             TType* x = t.lookupType(type.name);
             TType* el = NULL;
             if(elements!=NULL)
                 el = elements->typeChk(t);
 
+#ifdef DEBUG
             cout << "x s el " << x << " " << s << " " << el << endl;
+#endif
 
             if(x == NULL){
                 fprintf(stderr, "Array type does not exists.\n");
@@ -471,11 +492,6 @@ class NArrayDeclaration : public NVarrayDeclaration{
                 fprintf(stderr, "Array type is not the same type as array elements.\n");
                 return NULL;
             }
-
-            /*for(int i=0; i<elements.size(); i++){
-                if(x->name != elements[i]->typeChk(t)->name)
-                    err=true;
-            }*/
 
             return x;
             
@@ -651,10 +667,12 @@ class NReturn : public NStatement{
 			TType* s;
 			if (expr != NULL)s=expr->typeChk(t);
 			else s=t.lookupType("void");
-			cerr<<s->name<<expected->name<<endl;
+#ifdef DEBUG
+			cerr<<"blah " <<s->name<<expected->name<<endl;
+#endif
 			if(s->name==expected->name){return s;}
 			else {
-				cerr<<"Error: returns "<<s->name<<"but function returns "<<expected->name;
+				cerr<<"Error: returns "<<s->name<<" but function returns "<<expected->name<<endl;
 				return NULL;
 			}
 		}

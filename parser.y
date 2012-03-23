@@ -122,7 +122,7 @@ var_decl	: ident ident {
                                 Table.insert($2->name,new TVar($2->name,*((TType *)t)));
                              }else{
 								 flagerror=1;
-								cerr<<$1->name<<" does not name a type"<<endl;
+								 cerr<<"Error "<<$1->name<<" does not name a type"<<endl;
 							 }
                           }
 			| ident ident '=' expr {$$ = new NVariableDeclaration(*$1,*$2,$4);
@@ -318,9 +318,7 @@ ctrl_for	: FOR ident FROM expr TO expr block {$$ = new NFor(*$2,$4,$6,*$7);}
 			| FOR ident IN cons_arr block {$$ = new NFor(*$2,*$4,*$5);}
 			;
 
-var_asgn	: lrexpr '=' expr {$$ = new NAssignment($1,$3);
-
-                                cout << "lrexpr expr " << $1 << $3 <<endl; }
+var_asgn	: lrexpr '=' expr {$$ = new NAssignment($1,$3);}
             | error '=' {}
 			;
 
