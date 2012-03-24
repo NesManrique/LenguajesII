@@ -39,6 +39,11 @@ integer main(){
     b[#t] is b.
     b is b[1].
     string [2] a is "bl".
+	integer a.
+	integer x.
+	for a in 2 to 10 {
+		x=x;
+	}
 	//integer s is a->a.
 	//s=a->a.
 	//s=a->c.
