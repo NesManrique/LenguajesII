@@ -26,6 +26,9 @@ int main(int argc, char **argv)
 		yyparse();
 	    if(!flagerror){
             cout << "Parsing is over" << endl;
+#ifdef DEBUG	
+			ProgramAST->printTree(cout);
+#endif
      	  	cout << "Beginning Type Check" << endl;
 			Table.resetScope();
 			cout << ProgramAST->typeChk(Table)<< endl;
