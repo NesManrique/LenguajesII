@@ -19,6 +19,7 @@ class Node{
 #endif
 			return t.lookupType("void");
 		}
+		virtual void printTree(std::ostream& os,int depth=0) {};
 		virtual ~Node() {}
 };
 
@@ -44,6 +45,10 @@ class NExpressionStatement : public NStatement {
 #endif
 			return expr.typeChk(t);
 		}
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NExpressionStatement:"<<endl;
+			expr.printTree(os,depth+1);
+		}
 };
 
 class NInteger : public NExpression {
@@ -55,6 +60,9 @@ class NInteger : public NExpression {
 			cerr<<"TypeCHK:integer "<<value<<endl;
 #endif
 			return (TType*)t.lookupType("integer");
+		}
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NInteger: value="<<value<<endl;
 		}
 };
 
@@ -68,12 +76,20 @@ class NDouble : public NExpression {
 #endif
 			return (TType*)t.lookupType("float");
 		}
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NDouble: value="<<value<<endl;
+		}
 };
 
 class NString : public NExpression {
 	public :
 		std::string value;
 		NString(std::string &value) : value(value) {}
+		
+		
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NString: value="<<value<<endl;
+		}
 };
 
 class NArray : public NExpression {
@@ -108,6 +124,14 @@ class NArray : public NExpression {
             }
         
         }
+		
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NArray:values{"<<endl;
+            for(int i=0; i<values.size(); i++){
+				values[i]->printTree(os,depth+1);
+            }
+			os<<string(depth,' ')<<"}"<<endl;
+		}
 };
 
 class NChar : public NExpression {
@@ -119,6 +143,9 @@ class NChar : public NExpression {
 			cerr<<"TypeCHK:Char "<<value<<endl;
 #endif
 			return (TType*)t.lookupType("char");
+		}
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NChar: value="<<value<<endl;
 		}
 };
 
@@ -132,14 +159,16 @@ class NBool : public NExpression {
 #endif
 			return (TType*)t.lookupType("boolean");
 		}
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NBool: value="<<value<<endl;
+		}
 };
 
 class NIdentifier : public NLRExpression {
 	public:
 		std::string name;
 		TElement* symbol;
-		NIdentifier(std::string &name) : name(name){}
-		NIdentifier(std::string &name,TType* type) : name(name),symbol(type){}
+		NIdentifier(std::string &name,TType* type=NULL) : name(name),symbol(type){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
 			TVar* temp= (TVar*) t.lookup(name);
             if(temp==NULL){
@@ -147,6 +176,10 @@ class NIdentifier : public NLRExpression {
                 return NULL;
             }
 			return &temp->type;
+		}
+		
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NIdentifier: name="<<name;
 		}
 };
 
@@ -162,6 +195,13 @@ class NArrayAccess : public NLRExpression{
             } 
             
             return lexpr.typeChk(t);
+		}
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NAccess: "<<endl;
+			os<<string(depth+1,' ')<<"lexpr= "<<endl;
+			lexpr.printTree(os,depth+2);
+			os<<string(depth+1,' ')<<"index= "<<endl;
+			index.printTree(os,depth+2);
 		}
 };
 
@@ -186,6 +226,14 @@ class NStructAccess : public NLRExpression{
 				return NULL;
 			}
 			return res;
+		}
+		
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NStructAccess: "<<endl;
+			os<<string(depth+1,' ')<<"lexpr= "<<endl;
+			lexpr.printTree(os,depth+2);
+			os<<string(depth+1,' ')<<"name= "<<endl;
+			name.printTree(os,depth+2);
 		}
 };
 
@@ -215,6 +263,15 @@ class NFunctionCall : public NExpression {
                 #endif
                 return t.lookupFunc(id.name,args)->type;
             }
+		}
+		
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NFunctionCall: id="<< id.name<<endl;
+			os<<string(depth+1,' ')<<"arguments= {"<<endl;
+			for(int i=0;i<arguments.size();i++){
+				arguments[i]->printTree(os,depth+2);   
+			}
+			os<<string(depth+1,' ')<<"}"<<endl;
 		}
 };
 
@@ -251,6 +308,14 @@ class  NBinaryOperator : public NExpression {
 				}
 			}
 		}
+		
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NBinaryOp: op="<< op<<endl;
+			os<<string(depth+1,' ')<<"loper= "<<endl;
+			lexp.printTree(os,depth+2);   
+			os<<string(depth+1,' ')<<"roper="<<endl;
+			rexp.printTree(os,depth+2);   
+		}
 };
 
 class NUnaryOperator : public NExpression {
@@ -275,6 +340,12 @@ class NUnaryOperator : public NExpression {
 					return NULL;
 				}
 			}
+		}
+		
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NUnaryop: op="<< op<<endl;
+			os<<string(depth+1,' ')<<"roper="<<endl;
+			rexp.printTree(os,depth+2);   
 		}
 };
 
@@ -308,6 +379,14 @@ class NBlock: public NStatement{
 #endif
             return t.lookupType("void");
 		}
+		
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NBlock: {"<<endl;
+			for(int i=0;i<statements.size();i++){
+				statements[i]->printTree(os,depth+1);   
+			}
+			os<<string(depth,' ')<<"}"<<endl;
+		}
 };
 
 class NVarrayDeclaration : public NStatement{
@@ -321,6 +400,9 @@ class NVarrayDeclaration : public NStatement{
 			cerr<<"TypeCHK:default"<<endl;
 #endif
 			return t.lookupType("void");
+		}
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NVarrayDecl: id= "<< id.name<< " type: "<<type.name<<endl;
 		}
 };
 
@@ -354,6 +436,13 @@ class NVariableDeclaration : public NVarrayDeclaration {
 			cerr<<t1->name<<endl;
 #endif
 			return t1;
+		}
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NVarrayDecl: id= "<< id.name<< " type: "<<type.name<<endl;
+			if(assigment!=NULL) {
+				os<<"initialization ="<<endl;
+				assigment->printTree(os,depth+1);
+			}
 		}
 };
 
@@ -415,6 +504,18 @@ class NFunctionDeclaration : public NStatement {
             else
                 return 0;
         }
+		
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NFunctionDecl: id= "<< id.name<<"type="<<type.name<<endl;
+			os<<string(depth,' ')<<"args= ("<< id.name<<endl;
+			for(int i=0;i<args.size();i++){
+				args[i]->printTree(os,depth+1);   
+			}
+			os<<string(depth,' ')<<")"<< id.name<<endl;
+			if(block!=NULL) {
+				block->printTree(os,depth+1);
+			}
+		}
 			
 };
 
@@ -496,6 +597,13 @@ class NArrayDeclaration : public NVarrayDeclaration{
             return x;
             
         }
+		
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NArrayDecl: id= "<< id.name<<" type="<<type.name<<endl;
+			if(elements!=NULL) {
+				elements->printTree(os,depth+1);
+			}
+		}
 };
 
 class NRegisterDeclaration : public NStatement{
@@ -541,6 +649,15 @@ class NRegisterDeclaration : public NStatement{
 			
 			return 0;
         }
+		
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NStructDecl: id= "<< type.name<<endl;
+			os<<string(depth+1,' ')<<"fields= {"<< type.name<<endl;
+			for(int i=0;i<fields.size();i++){
+				fields[i]->printTree(os,depth+2);   
+			}
+			os<<string(depth+1,' ')<<"}"<< type.name<<endl;
+		}
 };
 
 class NUnionDeclaration : public NStatement{
@@ -586,6 +703,14 @@ class NUnionDeclaration : public NStatement{
 			
 			return 0;
         }
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NUnionDecl: id= "<< type.name<<endl;
+			os<<string(depth+1,' ')<<"fields= {"<< type.name<<endl;
+			for(int i=0;i<fields.size();i++){
+				fields[i]->printTree(os,depth+2);   
+			}
+			os<<string(depth+1,' ')<<"}"<< type.name<<endl;
+		}
 };
 
 
@@ -611,6 +736,14 @@ class NWhileDo : public NStatement{
 			}
 			return t.lookupType("void");
 		}
+		
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NWhileDo:"<<endl;
+			os<<string(depth,' ')<<"cond="<<endl;
+			cond->printTree(os,depth+2);
+			os<<string(depth,' ')<<"block="<<endl;
+			block.printTree(os,depth+2);
+		}
 };
 
 class NDoWhile : public NStatement{
@@ -635,6 +768,13 @@ class NDoWhile : public NStatement{
 			}
 			return t.lookupType("void");
 		}
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NDoWhile:"<<endl;
+			os<<string(depth,' ')<<"cond="<<endl;
+			cond->printTree(os,depth+2);
+			os<<string(depth,' ')<<"block="<<endl;
+			block.printTree(os,depth+2);
+		}
 };
 
 class NIf : public NStatement{
@@ -653,6 +793,18 @@ class NIf : public NStatement{
 			cond.typeChk(t);
 			if( a=NULL) return NULL;
 			return t.lookupType("void");
+		}
+		
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NIf:"<<endl;
+			os<<string(depth+1,' ')<<"cond="<<endl;
+			cond.printTree(os,depth+2);
+			os<<string(depth+1,' ')<<"block="<<endl;
+			block.printTree(os,depth+2);
+			if(elseBlock!=NULL){
+				os<<string(depth+1,' ')<<"elseblock="<<endl;
+				block.printTree(os,depth+2);
+			}
 		}
 };
 
@@ -715,13 +867,38 @@ class NFor : public NStatement{
 			if(err)return NULL;
 			return t.lookupType("void");
 		}
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NFor:"<<endl;
+			if(beg!=NULL){
+				os<<string(depth+1,' ')<<"range"<<endl;
+				beg->printTree(os,depth+2);
+				end->printTree(os,depth+2);
+				if(step!=NULL){
+					os<<string(depth+1,' ')<<"step"<<endl;
+					beg->printTree(os,depth+2);
+				}
+			}else{
+				os<<string(depth+1,' ')<<"arr"<<endl;
+				if(array!=NULL){
+					array->printTree(os,depth+2);
+				}else{
+					cons_arr->printTree(os,depth+2);
+				}
+			}
+		}
 
 };
 
 class NStop : public NStatement{
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NStop:"<<endl;
+		}
 };
 
 class NNext : public NStatement{
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NNext:"<<endl;
+		}
 
 };
 
@@ -744,6 +921,13 @@ class NReturn : public NStatement{
 			}
 		}
 		
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NReturn:"<<endl;
+			if(expr!=NULL){
+				expr->printTree(os,depth+1);
+			}
+		}
+		
 };
 
 class NAssignment : public NStatement{
@@ -762,5 +946,12 @@ class NAssignment : public NStatement{
 				return NULL;
 			}
 			return varT;
+		}
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NAssignment:"<<endl;
+			os<<string(depth+1,' ')<<"lvalue="<<endl;
+			var->printTree(os,depth+2);
+			os<<string(depth+1,' ')<<"rvalue="<<endl;
+			assig->printTree(os,depth+2);
 		}
 };
