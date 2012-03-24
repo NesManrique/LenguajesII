@@ -96,11 +96,11 @@ permite definir funciones o acceder variables antes de ser declaradas.
 
 ##Tipos
 
-Los tipos base en BLAH son `integer, character, floating, character, 
+Los tipos base en BLAH son `integer, character, floating, char, 
 string` y `void`. BLAH soporta tipos nuevos para el caso de registros y uniones
 (la especificación está más adelante). Se pueden construir arreglos de cualquier
 tipo que no sea `void`. El tipo `string` es manejado como un arreglo de
-`character`.
+`char`.
 
 ##Variables
 
@@ -149,10 +149,10 @@ imprimirlos, etc. Se planea añadir funciones que faciliten la manipulación de
 este tipo de datos. Las cadenas de caracteres están implementadas como arreglos
 de caracteres al estilo C/C++.
 
-*   La asignación de cadenas de caracteres es superficial.
+*   La asignación de cadenas de caracteres es profunda.
 *   Las cadenas de caracteres pueden ser pasadas como parámetros y retornadas de 
 las funciones.
-*   La comparación de strings (`==` y `!=`) es sensitiva a mayúsculas.
+*   La comparación de strings (`==` y `!=`) es profunda y sensitiva a mayúsculas.
 
 ##Funciones
 
@@ -180,12 +180,13 @@ ser compatible con ese tipo.
 ##Invocacion de funciones
 
 Los parámetros de BLAH son pasados por valor en el caso de los tipos básicos y
-por referencia en el caso de arreglos, registros y uniones. El valor de retorno
+por referencia en el caso de registros y uniones. El valor de retorno
 se pasa por valor y en el caso de tipos compuestos esos "valores" son
 referencias.
 
 *   El número de argumentos pasados en la llamada de una función deben ser
-iguales a la cantidad de parámetros formales.
+iguales a la cantidad de parámetros formales y estar en el mismo orden.
+*   Se permiten parámetros con valores por defecto.
 *   El tipo de cada argumento debe ser igual al tipo de los parámetros formales.
 *   Los argumentos son evaluados de derecha a izquierda.
 *   Una función retorna el control de la ejecución al llamador cuando se ejecuta
@@ -196,7 +197,18 @@ la instrucción return.
 
 Los registros son un tipo compuesto y en BLAH deben ser declarados como tipo
 antes de poder ser usados como variables. La declaración de un registro o unión
-se hace de manera similar a C/C++.
+se hace de manera similar a C/C++. Ejemplos:
+
+    union Un { 
+        integer c,
+        float d,
+        char e
+    }
+
+    register ASDF{
+	    integer a,
+	    float c
+    } 
 
 ##Equivalencia de tipos y compatibilidad
 

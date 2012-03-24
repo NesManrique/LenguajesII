@@ -5,7 +5,7 @@
 #include <string>
 #define TOKEN(t) (yylval.token = t)
 #define SAVE_TOKEN yylval.string = new std::string(yytext, yyleng)
-#define SAVE_STRING yylval.string = new std::string(string_buf,string_len)
+#define SAVE_STRING yylval.string = new std::string(string_buf)
 #define MAX_STR_CONST 1024
 int yycolumn = 1;
 #define YY_USER_ACTION yylloc.first_line = yylloc.last_line = yylineno;\
@@ -101,11 +101,11 @@ DOUBLE	 {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 	/*
 	"integer"			{return INT;}
 	"float"				{return FLOAT;}
-	"string"			{return STRING;}
 	"character"			{return CHAR;}
 	"boolean"			{return BOOL;}
 	"void"				{return VOID;}
 */	
+	"string"			{return STRIN;}
 	"register"			{return REGISTER;}
 	"union"				{return UNION;}
 	"arrayof"			{return ARRAY;}
@@ -140,6 +140,8 @@ DOUBLE	 {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 							* value to parser
 							*/
 							SAVE_STRING;
+                            cout << "yylval " << *yylval.string <<endl;
+                            printf("str buf %s\n",string_buf);
 							return STR;
 						}
 				
@@ -172,6 +174,7 @@ DOUBLE	 {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 							* value to parser
 							*/
 							SAVE_STRING;
+                            cout << "yylval " << yylval.string <<endl;
 							return STR;
 							
 						}

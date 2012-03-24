@@ -37,17 +37,17 @@ class NStatement : public Node {
 
 class NExpressionStatement : public NStatement {
 	public:
-		NExpression &expr;
-		NExpressionStatement(NExpression& expr):expr(expr){}
+		NExpression* expr;
+		NExpressionStatement(NExpression* expr):expr(expr){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
 #ifdef DEBUG
 			cerr<<"TypeCHK: ExprStament"<<endl;
 #endif
-			return expr.typeChk(t);
+			return expr->typeChk(t);
 		}
 		void printTree(std::ostream& os, int depth =0){
 			os<<string(depth,' ')<<"NExpressionStatement:"<<endl;
-			expr.printTree(os,depth+1);
+			expr->printTree(os,depth+1);
 		}
 };
 
@@ -85,10 +85,45 @@ class NString : public NExpression {
 	public :
 		std::string value;
 		NString(std::string &value) : value(value) {}
-		
-		
 		void printTree(std::ostream& os, int depth =0){
 			os<<string(depth,' ')<<"NString: value="<<value<<endl;
+        }
+		TType* typeChk(Symtable& t, TType* expected=NULL){
+#ifdef DEBUG
+			cerr<<"TypeCHK:double "<<value<<endl;
+#endif
+			return new TString(value.length());
+
+        }
+};
+
+class NChar : public NExpression {
+	public :
+		char value;
+		NChar(char value) : value(value){}
+		TType* typeChk(Symtable& t,TType* expected = NULL){
+#ifdef DEBUG
+			cerr<<"TypeCHK:Char "<<value<<endl;
+#endif
+			return (TType*)t.lookupType("char");
+		}
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NChar: value="<<value<<endl;
+		}
+};
+
+class NBool : public NExpression {
+	public:
+		bool value;
+		NBool(bool value) :value(value){}
+		TType* typeChk(Symtable& t,TType* expected = NULL){
+#ifdef DEBUG
+			cerr<<"TypeCHK:Bool "<<value<<endl;
+#endif
+			return (TType*)t.lookupType("boolean");
+		}
+		void printTree(std::ostream& os, int depth =0){
+			os<<string(depth,' ')<<"NBool: value="<<value<<endl;
 		}
 };
 
@@ -99,6 +134,18 @@ class NArray : public NExpression {
 		NArray(ExpressionList values):values(values){}
         void add(NArray* arr){
             values.push_back(arr);
+        }
+        NArray(std::string& s){
+#ifdef DEBUG
+            cout << "string param "<< s.size()<<endl;
+            cout << "string param "<< s<<endl;
+#endif
+            for(int i=0; i<s.size();i++){
+                values.push_back(new NChar(s[i]));
+            }
+#ifdef DEBUG
+            cout << "constrc string "<< values.size()<<endl;
+#endif
         }
 		TType* typeChk(Symtable& t,TType* expected = NULL){
             bool err=false;
@@ -134,35 +181,6 @@ class NArray : public NExpression {
 		}
 };
 
-class NChar : public NExpression {
-	public :
-		char value;
-		NChar(char value) : value(value){}
-		TType* typeChk(Symtable& t,TType* expected = NULL){
-#ifdef DEBUG
-			cerr<<"TypeCHK:Char "<<value<<endl;
-#endif
-			return (TType*)t.lookupType("char");
-		}
-		void printTree(std::ostream& os, int depth =0){
-			os<<string(depth,' ')<<"NChar: value="<<value<<endl;
-		}
-};
-
-class NBool : public NExpression {
-	public:
-		bool value;
-		NBool(bool value) :value(value){}
-		TType* typeChk(Symtable& t,TType* expected = NULL){
-#ifdef DEBUG
-			cerr<<"TypeCHK:Bool "<<value<<endl;
-#endif
-			return (TType*)t.lookupType("boolean");
-		}
-		void printTree(std::ostream& os, int depth =0){
-			os<<string(depth,' ')<<"NBool: value="<<value<<endl;
-		}
-};
 
 class NIdentifier : public NLRExpression {
 	public:
@@ -185,33 +203,33 @@ class NIdentifier : public NLRExpression {
 
 class NArrayAccess : public NLRExpression{
 	public:
-		NLRExpression &lexpr;
-		NExpression &index;
-		NArrayAccess(NLRExpression &lexpr, NExpression &index):lexpr(lexpr),index(index){}
+		NLRExpression *lexpr;
+		NExpression *index;
+		NArrayAccess(NLRExpression *lexpr, NExpression *index):lexpr(lexpr),index(index){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
-			if (index.typeChk(t)->name!="integer"){ 
+			if (index->typeChk(t)->name!="integer"){ 
 			    fprintf(stderr,"Array index must be an integer\n");
                 return NULL;
             } 
             
-            return lexpr.typeChk(t);
+            return lexpr->typeChk(t);
 		}
 		void printTree(std::ostream& os, int depth =0){
 			os<<string(depth,' ')<<"NAccess: "<<endl;
 			os<<string(depth+1,' ')<<"lexpr= "<<endl;
-			lexpr.printTree(os,depth+2);
+			lexpr->printTree(os,depth+2);
 			os<<string(depth+1,' ')<<"index= "<<endl;
-			index.printTree(os,depth+2);
+			index->printTree(os,depth+2);
 		}
 };
 
 class NStructAccess : public NLRExpression{
 	public:
-		NLRExpression &lexpr;
-		NIdentifier &name;
-		NStructAccess(NLRExpression &lexpr,NIdentifier &name):lexpr(lexpr),name(name){}
+		NLRExpression *lexpr;
+		NIdentifier& name;
+		NStructAccess(NLRExpression *lexpr,NIdentifier& name):lexpr(lexpr),name(name){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
-			TStructured* temp = (TStructured*)lexpr.typeChk(t);
+			TStructured* temp = (TStructured*)lexpr->typeChk(t);
 			if (temp == NULL) return NULL;
 #ifdef DEBUG			
 			cerr<<"lexpr is a(n) "<<temp->name<<" "<<temp->struc<<temp->numeric<<temp->basic<<endl;
@@ -231,7 +249,7 @@ class NStructAccess : public NLRExpression{
 		void printTree(std::ostream& os, int depth =0){
 			os<<string(depth,' ')<<"NStructAccess: "<<endl;
 			os<<string(depth+1,' ')<<"lexpr= "<<endl;
-			lexpr.printTree(os,depth+2);
+			lexpr->printTree(os,depth+2);
 			os<<string(depth+1,' ')<<"name= "<<endl;
 			name.printTree(os,depth+2);
 		}
@@ -279,12 +297,12 @@ class NFunctionCall : public NExpression {
 class  NBinaryOperator : public NExpression {
 	public :
 		string op;
-		NExpression &lexp;
-		NExpression &rexp;
-		NBinaryOperator(NExpression& lexp,string op,NExpression& rexp):op(op),lexp(lexp),rexp(rexp){}
+		NExpression *lexp;
+		NExpression *rexp;
+		NBinaryOperator(NExpression* lexp,string op,NExpression* rexp):op(op),lexp(lexp),rexp(rexp){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
-			TType* t1=lexp.typeChk(t);
-			TType* t2=rexp.typeChk(t);
+			TType* t1=lexp->typeChk(t);
+			TType* t2=rexp->typeChk(t);
 			if(isalpha(op[0])){
 				if(t1->name=="boolean" && t2->name=="boolean"){
 					return t1;
@@ -312,19 +330,19 @@ class  NBinaryOperator : public NExpression {
 		void printTree(std::ostream& os, int depth =0){
 			os<<string(depth,' ')<<"NBinaryOp: op="<< op<<endl;
 			os<<string(depth+1,' ')<<"loper= "<<endl;
-			lexp.printTree(os,depth+2);   
+			lexp->printTree(os,depth+2);   
 			os<<string(depth+1,' ')<<"roper="<<endl;
-			rexp.printTree(os,depth+2);   
+			rexp->printTree(os,depth+2);   
 		}
 };
 
 class NUnaryOperator : public NExpression {
 	public :
 		string op;
-		NExpression &rexp;
-		NUnaryOperator(string op,NExpression& rexp):op(op),rexp(rexp){}
+		NExpression *rexp;
+		NUnaryOperator(string op,NExpression* rexp):op(op),rexp(rexp){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
-			TType* t2=rexp.typeChk(t);
+			TType* t2=rexp->typeChk(t);
 			if(isalpha(op[0])){
 				if(t2->name=="boolean"){
 					return t2;
@@ -345,7 +363,7 @@ class NUnaryOperator : public NExpression {
 		void printTree(std::ostream& os, int depth =0){
 			os<<string(depth,' ')<<"NUnaryop: op="<< op<<endl;
 			os<<string(depth+1,' ')<<"roper="<<endl;
-			rexp.printTree(os,depth+2);   
+			rexp->printTree(os,depth+2);   
 		}
 };
 
@@ -363,7 +381,7 @@ class NBlock: public NStatement{
 #endif
 				s=statements[i]->typeChk(t,expected);
 				if(s==NULL){
-					cerr<<"Error in the statement "<<i+1<<" of block."<<endl;
+					cerr<<"Error in the statement "<<i<<" of block."<<endl;
 					err=true;
 				}
 			}
@@ -542,7 +560,7 @@ class NArrayDeclaration : public NVarrayDeclaration{
                 cerr << "Error in array declaration. Type " << type.name <<  " does not exist." <<endl;
                 return 1; 
             }else if(na!=NULL){
-                cerr << "Error array " << id.name << " already exists." << endl;
+                cerr << "Error array already exists." << endl;
                 return 1;
             }else if(si->isarr && ((TArray *)si)->type.name!="integer"){
                 cerr << "Error array dimensions must be integers." << endl;
@@ -569,7 +587,7 @@ class NArrayDeclaration : public NVarrayDeclaration{
 		TType* typeChk(Symtable& t,TType* expected = NULL){
 
 #ifdef DEBUG
-            cout <<"beginnig arr typechk\n "<<endl;
+            cout <<"\nbeginnig arr typechk"<<endl;
 #endif
             TType* s = size.typeChk(t);
             TType* x = t.lookupType(type.name);
@@ -779,18 +797,18 @@ class NDoWhile : public NStatement{
 
 class NIf : public NStatement{
 	public:
-		NExpression& cond;
+		NExpression* cond;
 		NStatement& block;
 		NStatement* elseBlock;
-		NIf(NExpression& cond,NStatement& block):cond(cond),block(block){}
-		NIf(NExpression& cond,NStatement& block, NStatement* elseBlock):cond(cond),block(block),elseBlock(elseBlock){}
+		NIf(NExpression* cond,NStatement& block):cond(cond),block(block){}
+		NIf(NExpression* cond,NStatement& block, NStatement* elseBlock):cond(cond),block(block),elseBlock(elseBlock){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
 			TType *a,*b,*c;
-			a=cond.typeChk(t);	
+			a=cond->typeChk(t);	
 			b=block.typeChk(t,expected);
 			if(elseBlock!=NULL) c=elseBlock->typeChk(t,expected);
 			if(a==NULL || b==NULL ) return NULL;
-			cond.typeChk(t);
+			cond->typeChk(t);
 			if( a=NULL) return NULL;
 			return t.lookupType("void");
 		}
@@ -798,7 +816,7 @@ class NIf : public NStatement{
 		void printTree(std::ostream& os, int depth =0){
 			os<<string(depth,' ')<<"NIf:"<<endl;
 			os<<string(depth+1,' ')<<"cond="<<endl;
-			cond.printTree(os,depth+2);
+			cond->printTree(os,depth+2);
 			os<<string(depth+1,' ')<<"block="<<endl;
 			block.printTree(os,depth+2);
 			if(elseBlock!=NULL){

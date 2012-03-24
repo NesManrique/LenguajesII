@@ -11,7 +11,7 @@ arrayof [2,2] boolean asd = [[true,false],[true,true]].
 //arrayof [3] boolean asdf = [true,1,true].
 //arrayof [true] boolean asdf = [true].
 
-/*
+
 register ASDF{
 	integer a,
 	float c
@@ -30,19 +30,22 @@ boolean prueba(integer a, char z){
 boolean prueba(){
     return false.
 }
-*/
+
 
 integer main(){
 
-    //boolean y = prueba(1,#t).
-    //ASDF a.
-	integer a.
+    boolean y = prueba(1,#t).
+    ASDF a.
+    b[#t] is b.
+    b is b[1].
+    string [2] a is "bl".
+	//integer a.
 	integer x.
-	for a in 2 to 10 {
-		x=x;
+	for a from 2 to 10 {
+		x=x.
 	}
-	//integer s is a->a.
-	//s=a->a.
-	//s=a->c.
+	integer s is a->a.
+	s=a->a.
+	s=a->c.
 	return 0 .
 }
