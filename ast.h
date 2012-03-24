@@ -74,39 +74,12 @@ class NString : public NExpression {
 	public :
 		std::string value;
 		NString(std::string &value) : value(value) {}
-};
-
-class NArray : public NExpression {
-	public :
-		ExpressionList values;
-		NArray(){}
-		NArray(ExpressionList values):values(values){}
-        void add(NArray* arr){
-            values.push_back(arr);
-        }
-		TType* typeChk(Symtable& t,TType* expected = NULL){
-            bool err=false;
+        TType* typeChk(Symtable& t, TType* expected=NULL){
 #ifdef DEBUG
-            cout << "values size " << values.size() << endl;
+			cerr<<"TypeCHK:double "<<value<<endl;
 #endif
+			return new TString(value.length());
 
-            TType* elem = values[0]->typeChk(t);
-
-            for(int i=1; i<values.size(); i++){
-                if(elem != values[i]->typeChk(t))
-                    err=true;
-            }
-
-            if(err){
-                fprintf(stderr, "Array elements are not the same type.\n");
-                return NULL;
-            }else{
-#ifdef DEBUG
-                cout << "cons array type " << elem->name << endl;
-#endif
-                return elem;
-            }
-        
         }
 };
 
@@ -132,6 +105,52 @@ class NBool : public NExpression {
 #endif
 			return (TType*)t.lookupType("boolean");
 		}
+};
+
+class NArray : public NExpression {
+	public :
+		ExpressionList values;
+		NArray(){}
+		NArray(ExpressionList values):values(values){}
+        void add(NArray* arr){
+            values.push_back(arr);
+        }
+        NArray(std::string& s){
+#ifdef DEBUG
+            cout << "string param "<< s.size()<<endl;
+            cout << "string param "<< s<<endl;
+#endif
+            for(int i=0; i<s.size();i++){
+                values.push_back(new NChar(s[i]));
+            }
+#ifdef DEBUG
+            cout << "constrc string "<< values.size()<<endl;
+#endif
+        }
+		TType* typeChk(Symtable& t,TType* expected = NULL){
+            bool err=false;
+#ifdef DEBUG
+            cout << "values size " << values.size() << endl;
+#endif
+
+            TType* elem = values[0]->typeChk(t);
+
+            for(int i=1; i<values.size(); i++){
+                if(elem != values[i]->typeChk(t))
+                    err=true;
+            }
+
+            if(err){
+                fprintf(stderr, "Array elements are not the same type.\n");
+                return NULL;
+            }else{
+#ifdef DEBUG
+                cout << "cons array type " << elem->name << endl;
+#endif
+                return elem;
+            }
+        
+        }
 };
 
 class NIdentifier : public NLRExpression {
@@ -292,7 +311,7 @@ class NBlock: public NStatement{
 #endif
 				s=statements[i]->typeChk(t,expected);
 				if(s==NULL){
-					cerr<<"Error in the statement "<<i+1<<" of block."<<endl;
+					cerr<<"Error in the statement "<<i<<" of block."<<endl;
 					err=true;
 				}
 			}
@@ -468,7 +487,7 @@ class NArrayDeclaration : public NVarrayDeclaration{
 		TType* typeChk(Symtable& t,TType* expected = NULL){
 
 #ifdef DEBUG
-            cout <<"beginnig arr typechk\n "<<endl;
+            cout <<"\nbeginnig arr typechk"<<endl;
 #endif
             TType* s = size.typeChk(t);
             TType* x = t.lookupType(type.name);

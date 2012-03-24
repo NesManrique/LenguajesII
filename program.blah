@@ -38,6 +38,7 @@ integer main(){
     //ASDF a.
     b[#t] is b.
     b is b[1].
+    string [2] a is "bl".
 	//integer s is a->a.
 	//s=a->a.
 	//s=a->c.

@@ -146,7 +146,11 @@ class TArray: public TType{
         }
 };
 
-
+class TString: public TType{
+    public:
+        int length;
+        TString(int length):TType("string",length*sizeof(char),false,false,false,true),length(length){}
+};
 
 class Symtable {
 	hash_map<tuple,TElement*> table;
@@ -161,8 +165,7 @@ class Symtable {
 			table[tuple(string("float"),scope)]=new TType("float",sizeof(float),true,true);
 			table[tuple(string("boolean"),scope)]=new TType("boolean",sizeof(bool),true);
 			table[tuple(string("void"),scope)]=new TType("void",0,true);
-			table[tuple(string("string"),scope)]=new TType("string",0,true);
-            
+            table[tuple(string("string"),scope)]=new TString(0);
 		}
 		
 		int insertType(string& name,TType* type){
