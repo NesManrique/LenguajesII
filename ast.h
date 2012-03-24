@@ -20,7 +20,6 @@ class Node{
 			return t.lookupType("void");
 		}
         //virtual secondChk();
-        
 		virtual ~Node() {}
 };
 

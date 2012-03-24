@@ -1,5 +1,5 @@
 
-#Especificación del lenguaje BLAH D:
+#Especificación del lenguaje BLAH (Best Language At Home)
 
 ##Introducción
 
@@ -64,14 +64,12 @@ Un comentario de una línea comienza con `//` y se extiende hasta el final de la
 termina con `*/`. Cualquier símbolo es permitido en el comentario excepto `*/` que termina el comentario actual. Así como en C/C++ los comentarios
 no se anidan.
 
-##Gramática
-
 ##Estructura de los programas
 
 Un programa de BLAH es una secuencia de declaraciones, donde cada declaración establece una variable o una función. Una declaración se refiere
 a una sentencia que establece la identidad de dichas variables o funciones, mientras que una definición se refiere a la descripción total de su
 funcionamiento o cuerpo. Para nuestros propósitos, las declaraciones y definiciones pueden estar juntas o separadas. En caso de que sean separadas,
-las declaraciones deben estar antes de las definiciones o inicializaciones. El programa debe tener una función principal llamada `main` que 
+las declaraciones deben estar antes o en la misma línea de las definiciones o inicializaciones. El programa debe tener una función principal llamada `main` que 
 no toma argumentos y retorna un tipo `integer`. Esta función sirve de punto de entrada para la ejecución del programa.
 
 ##Alcance
@@ -147,12 +145,13 @@ se escriben en una arreglo de enteros de la siguiente manera:
 Los programas incluyen cadenas de caracteres constantes, es posible comparar strings,
 imprimirlos, etc. Se planea añadir funciones que faciliten la manipulación de
 este tipo de datos. Las cadenas de caracteres están implementadas como arreglos
-de caracteres al estilo C/C++.
+de caracteres al estilo C.
 
 *   La asignación de cadenas de caracteres es profunda.
 *   Las cadenas de caracteres pueden ser pasadas como parámetros y retornadas de 
 las funciones.
 *   La comparación de strings (`==` y `!=`) es profunda y sensitiva a mayúsculas.
+*   Los strings son un alias para arreglos de caracteres.
 
 ##Funciones
 
@@ -170,8 +169,6 @@ dentro de ésta es definido, variables dentro de ese bloque pueden tapar a los
 parámetros formales.
 *   Una función puede volver cualquier tipo base, arreglo, registro o unión.
 `void` es usado para indicar que la función no retorna ningún valor.
-*   Sobrecarga de funciones no está permitida para los usuarios pero existen
-funciones sobrecargadas dentro del lenguaje.
 *   Si una función retorna un tipo distinto a `void`, el valor retornado debe
 ser compatible con ese tipo.
 *   Si una función retorna `void` se puede usar la instrucción return sola.
@@ -196,7 +193,7 @@ la instrucción return.
 ##Registros y Uniones
 
 Los registros son un tipo compuesto y en BLAH deben ser declarados como tipo
-antes de poder ser usados como variables. La declaración de un registro o unión
+antes de poder declarar variables de ese tipo. La declaración de un registro o unión
 se hace de manera similar a C/C++. Ejemplos:
 
     union Un { 
@@ -231,10 +228,57 @@ alcance no está permitido.
 
 ##Estructuras de control
 
+BLAH soporta estucturas de control similares a otros lenguajes. El tradicional
+`if then else if then else` como estructura de selección y en los ciclos tenemos:
 
+    * La estructura `for` en sus tres tipos: iteración por variable, por arreglo
+    y por rango.
+    * La estructura `while do` y `do while`.
+
+Otras consideraciones tomadas en estas estructuras son las siguientes:
+
+    * Las condiciones de estas estructuras deben ser de tipo `boolean`. No se permiten
+    usar enteros.
+    * La instruccion `break` solo puede aparecer dentro de los ciclos.
+    * Se provee de un campo step para los `for` con rango para definir el paso por
+    vuelta.
 
 ##Expresiones
 
+    * BLAH no soporta cohersión de tipos entre enteros y flotantes.
+    * Entre tipos diferentes solo se permite operar con un entero y un double, el
+    resultado sera un double.
+    * El operando para el menos unario debe ser `integer`, `double` o `float`. El
+    resultado sera del mismo tipo que los operandos.
+    * Los operandos para operadores relacionales (<,>,<=,>=) deben ser `integer`,
+    `double` o `float`. El resultado es `boolean`.
+    * Para el caso de los operadores de equidad (=,!=) deben ser de tipo equivalente.
+    El resultado sera de tipo `boolean`.
+    * Los operandos para los operadores binarios y unarios logicos deben ser 
+    `boolean` (&&,|| y !). El resultado sera `boolean`.
+    * Los operandos son evaluados de izquierda a derecha excepto los relacionales que
+    son no asociativos.
 
-##Lo que no tiene el lenguaje
+    La precedencia de los operadores es, de mayor a menor:
 
+    ->                  Acceso a estructuras
+    - !                 Operadores unarios
+    * /                 Multiplicacion y division
+    + - and or          Suma Resta And y Or
+    == != < > <= >=     Operadores Relacionales
+
+##Lo que no tiene el lenguaje hasta esta última versión
+
+    Algunos de estos items estan en la especificación pero se harán en el siguiente
+    curso, sin embargo, algunos de estos items si son solicitados para la presente
+    entrega pero no se pudieron terminar.
+
+    * No se pueden declarar firmas de funciones sin el cuerpo.
+    * El arbol que se genera despues del parseo no esta optimizado
+    * No se verfiica que la variable de control del `for` no sea usada como `lvalue`
+    * No se verifica que la función tenga un return para cada rama de ejecución posible
+    * No se chequea el uso de variables no inicializadas.
+    * No se detecta codigo no alcanzable.
+    * Los pasajes por valor y referencia no se encuentran implementados.
+    * Los enteros con formato hexadecimal y octal no se agregaron al lexer.
+    * No se chequea que exista una función `main`. 
