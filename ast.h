@@ -19,6 +19,8 @@ class Node{
 #endif
 			return t.lookupType("void");
 		}
+        //virtual secondChk();
+        
 		virtual ~Node() {}
 };
 
@@ -36,13 +38,13 @@ class NStatement : public Node {
 
 class NExpressionStatement : public NStatement {
 	public:
-		NExpression &expr;
-		NExpressionStatement(NExpression& expr):expr(expr){}
+		NExpression* expr;
+		NExpressionStatement(NExpression* expr):expr(expr){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
 #ifdef DEBUG
 			cerr<<"TypeCHK: ExprStament"<<endl;
 #endif
-			return expr.typeChk(t);
+			return expr->typeChk(t);
 		}
 };
 
@@ -171,26 +173,26 @@ class NIdentifier : public NLRExpression {
 
 class NArrayAccess : public NLRExpression{
 	public:
-		NLRExpression &lexpr;
-		NExpression &index;
-		NArrayAccess(NLRExpression &lexpr, NExpression &index):lexpr(lexpr),index(index){}
+		NLRExpression *lexpr;
+		NExpression *index;
+		NArrayAccess(NLRExpression *lexpr, NExpression *index):lexpr(lexpr),index(index){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
-			if (index.typeChk(t)->name!="integer"){ 
+			if (index->typeChk(t)->name!="integer"){ 
 			    fprintf(stderr,"Array index must be an integer\n");
                 return NULL;
             } 
             
-            return lexpr.typeChk(t);
+            return lexpr->typeChk(t);
 		}
 };
 
 class NStructAccess : public NLRExpression{
 	public:
-		NLRExpression &lexpr;
-		NIdentifier &name;
-		NStructAccess(NLRExpression &lexpr,NIdentifier &name):lexpr(lexpr),name(name){}
+		NLRExpression *lexpr;
+		NIdentifier& name;
+		NStructAccess(NLRExpression *lexpr,NIdentifier& name):lexpr(lexpr),name(name){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
-			TStructured* temp = (TStructured*)lexpr.typeChk(t);
+			TStructured* temp = (TStructured*)lexpr->typeChk(t);
 			if (temp == NULL) return NULL;
 #ifdef DEBUG			
 			cerr<<"lexpr is a(n) "<<temp->name<<" "<<temp->struc<<temp->numeric<<temp->basic<<endl;
@@ -241,12 +243,12 @@ class NFunctionCall : public NExpression {
 class  NBinaryOperator : public NExpression {
 	public :
 		string op;
-		NExpression &lexp;
-		NExpression &rexp;
-		NBinaryOperator(NExpression& lexp,string op,NExpression& rexp):op(op),lexp(lexp),rexp(rexp){}
+		NExpression *lexp;
+		NExpression *rexp;
+		NBinaryOperator(NExpression* lexp,string op,NExpression* rexp):op(op),lexp(lexp),rexp(rexp){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
-			TType* t1=lexp.typeChk(t);
-			TType* t2=rexp.typeChk(t);
+			TType* t1=lexp->typeChk(t);
+			TType* t2=rexp->typeChk(t);
 			if(isalpha(op[0])){
 				if(t1->name=="boolean" && t2->name=="boolean"){
 					return t1;
@@ -275,10 +277,10 @@ class  NBinaryOperator : public NExpression {
 class NUnaryOperator : public NExpression {
 	public :
 		string op;
-		NExpression &rexp;
-		NUnaryOperator(string op,NExpression& rexp):op(op),rexp(rexp){}
+		NExpression *rexp;
+		NUnaryOperator(string op,NExpression* rexp):op(op),rexp(rexp){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
-			TType* t2=rexp.typeChk(t);
+			TType* t2=rexp->typeChk(t);
 			if(isalpha(op[0])){
 				if(t2->name=="boolean"){
 					return t2;
@@ -460,7 +462,7 @@ class NArrayDeclaration : public NVarrayDeclaration{
                 cerr << "Error in array declaration. Type " << type.name <<  " does not exist." <<endl;
                 return 1; 
             }else if(na!=NULL){
-                cerr << "Error array " << id.name << " already exists." << endl;
+                cerr << "Error array already exists." << endl;
                 return 1;
             }else if(si->isarr && ((TArray *)si)->type.name!="integer"){
                 cerr << "Error array dimensions must be integers." << endl;
@@ -658,18 +660,18 @@ class NDoWhile : public NStatement{
 
 class NIf : public NStatement{
 	public:
-		NExpression& cond;
+		NExpression* cond;
 		NStatement& block;
 		NStatement* elseBlock;
-		NIf(NExpression& cond,NStatement& block):cond(cond),block(block){}
-		NIf(NExpression& cond,NStatement& block, NStatement* elseBlock):cond(cond),block(block),elseBlock(elseBlock){}
+		NIf(NExpression* cond,NStatement& block):cond(cond),block(block){}
+		NIf(NExpression* cond,NStatement& block, NStatement* elseBlock):cond(cond),block(block),elseBlock(elseBlock){}
 		TType* typeChk(Symtable& t,TType* expected = NULL){
 			TType *a,*b,*c;
-			a=cond.typeChk(t);	
+			a=cond->typeChk(t);	
 			b=block.typeChk(t,expected);
 			if(elseBlock!=NULL) c=elseBlock->typeChk(t,expected);
 			if(a==NULL || b==NULL ) return NULL;
-			cond.typeChk(t);
+			cond->typeChk(t);
 			if( a=NULL) return NULL;
 			return t.lookupType("void");
 		}

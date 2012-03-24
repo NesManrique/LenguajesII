@@ -117,23 +117,46 @@ varr_decl	: var_decl
 			;
 
 var_decl	: ident ident {
-                            TElement * t;
-                            $$ = new NVariableDeclaration(*$1,*$2);
-                            if((t=Table.lookupType($1->name))!=NULL){
+                  TElement * t;
+                  $$ = new NVariableDeclaration(*$1,*$2);
+
+                  if((t=Table.lookupScope($2->name))!=NULL){
+                      flagerror = 1;
+                      cerr<<"Variable `"<< $2->name<< "` was declare before: l"
+                          <<@2.first_line<<",c"<<@2.first_column<<"-l"<<
+                          @2.first_line<<",c"<<@2.first_column<<endl;
+                  }
+
+                  if((t=Table.lookupType($1->name))!=NULL){
 #ifdef DEBUG
-								cerr<<" inserting variable "<< $2->name<<" as "<<$1->name<<endl;
+					  cerr<<" inserting variable "<< $2->name<<" as "<<$1->name<<endl;
 #endif
-                                Table.insert($2->name,new TVar($2->name,*((TType *)t)));
-                             }else{
-								 flagerror=1;
-								 cerr<<"Error "<<$1->name<<" does not name a type"<<endl;
-							 }
+                      Table.insert($2->name,new TVar($2->name,*((TType *)t)));
+                  }else{
+					  flagerror=1;
+					  cerr<<"Error "<<$1->name<<" does not name a type"<<endl;
+				  }
+    
                           }
-			| ident ident '=' expr {$$ = new NVariableDeclaration(*$1,*$2,$4);
-                                    TElement * t;
-                                    if((t=Table.lookupType($1->name))!=NULL){
-                                        Table.insert($2->name,
-                                        new TVar($1->name,*((TType *)t)));}}
+            | ident ident '=' expr {$$ = new NVariableDeclaration(*$1,*$2,$4);
+                TElement * t;
+
+                 if((t=Table.lookupScope($2->name))!=NULL){
+                    flagerror = 1;
+                    cerr<<"Variable `"<< $2->name<< "` was declare before: l"
+                        <<@2.first_line<<",c"<<@2.first_column<<"-l"<<
+                        @2.first_line<<",c"<<@2.first_column<<endl;
+                }
+
+                if((t=Table.lookupType($1->name))!=NULL){
+                    Table.insert($2->name,
+                            new TVar($1->name,*((TType *)t)));
+                }else{
+			            flagerror=1;
+			            cerr<<"Error "<<$1->name<<" does not name a type"<<endl;
+		        }
+
+                                               }
             /*| ident error {}*/
 			;
 
@@ -141,39 +164,46 @@ fun_decl	: fun_firm block {$1->block = $2;$$ = $1;}
             /*FIRMAS DE FUNCIONES PARA EL PROX TRIMESTRE | fun_firm {$$=$1;}*/
 			;
 
-fun_firm	: ident ident fun_decl_args 	{$$ = new NFunctionDeclaration(*$1,*$2,*$3);
-                                                if($$->addSymtable(Table)==2)
-                                                cerr<<"Function `"<< $$->id.name<< "` was declare before. l"
-                                                <<@2.first_line<<",c"<<@2.first_column<<"-l"<<
-                                                @2.first_line<<",c"<<@2.first_column<<endl;} 
+fun_firm	: ident ident fun_decl_args {
+                  $$ = new NFunctionDeclaration(*$1,*$2,*$3);
+                  if($$->addSymtable(Table)==2){
+                      flagerror=1;
+                      cerr<<"Function `"<< $$->id.name<< "` was declare before: l"
+                          <<@2.first_line<<",c"<<@2.first_column<<"-l"<<
+                          @2.first_line<<",c"<<@2.first_column<<endl;
+                  }} 
 
-str_decl    : STRIN cons_arr ident {$$ = new NArrayDeclaration(*$3,*(new NIdentifier(*( new std::string("char")))),*$2);
-                                    if($$->addSymtable(Table)==1)
-                                            cerr<<"Array `"<< $$->id.name<< "`. l"
-                                            <<@3.first_line<<",c"<<@3.first_column<<"-l"<<
-                                            @3.first_line<<",c"<<@3.first_column<<endl;
-
+str_decl    : STRIN cons_arr ident {
+                  $$ = new NArrayDeclaration(*$3,*(new NIdentifier(*( new std::string("char")))),*$2);
+                  if($$->addSymtable(Table)==1)
+                      cerr<<"Array `"<< $$->id.name<< "`. l"
+                          <<@3.first_line<<",c"<<@3.first_column<<"-l"<<
+                          @3.first_line<<",c"<<@3.first_column<<endl;
+                  flagerror=1;
                                     }
-            | STRIN cons_arr ident '=' STR {$$ = new NArrayDeclaration(*$3,*(new NIdentifier(*(new std::string("char")))),*$2,new NArray(*$5));
-                                            if($$->addSymtable(Table)==1)
-                                            cerr<<"Array `"<< $$->id.name<< "`. l"
-                                            <<@3.first_line<<",c"<<@3.first_column<<"-l"<<
-                                            @3.first_line<<",c"<<@3.first_column<<endl;
+| STRIN cons_arr ident '=' STR {$$ = new NArrayDeclaration(*$3,*(new NIdentifier(*(new std::string("char")))),*$2,new NArray(*$5));
+                        if($$->addSymtable(Table)==1)
+                            cerr<<"Array `"<< $$->id.name<< "`. l"
+                                <<@3.first_line<<",c"<<@3.first_column<<"-l"<<
+                                @3.first_line<<",c"<<@3.first_column<<endl;
+                            flagerror=1;
 
                                             }
             ;
 
 arr_decl    : ARRAY cons_arr ident ident {$$ = new NArrayDeclaration(*$4,*$3,*$2);
-                                        if($$->addSymtable(Table)==1)
-                                            cerr<<"Array `"<< $$->id.name<< "`. l"
-                                            <<@4.first_line<<",c"<<@4.first_column<<"-l"<<
-                                            @4.first_line<<",c"<<@4.first_column<<endl;
+                  if($$->addSymtable(Table)==1)
+                      cerr<<"Array `"<< $$->id.name<< "`: l"
+                          <<@4.first_line<<",c"<<@4.first_column<<"-l"<<
+                          @4.first_line<<",c"<<@4.first_column<<endl;
+                  flagerror=1;
                                     }
-            | ARRAY cons_arr ident ident '=' arr_lst {$$ = new NArrayDeclaration(*$4,*$3,*$2,$6);
-                                                        if($$->addSymtable(Table)==1)
-                                                            cerr<<"Array `"<< $$->id.name<< "`. l"
-                                            <<@4.first_line<<",c"<<@4.first_column<<"-l"<<
-                                            @4.first_line<<",c"<<@4.first_column<<endl;
+| ARRAY cons_arr ident ident '=' arr_lst {$$ = new NArrayDeclaration(*$4,*$3,*$2,$6);
+                    if($$->addSymtable(Table)==1)
+                        cerr<<"Array `"<< $$->id.name<< "`: l"
+                            <<@4.first_line<<",c"<<@4.first_column<<"-l"<<
+                            @4.first_line<<",c"<<@4.first_column<<endl;
+                    flagerror=1;
 
                                                         }
 
@@ -237,20 +267,20 @@ expr		: lrexpr{$$ = $<expr>1;}
 			| TRUE	{$$ = new NBool(true);}
 			| FALSE	{$$ = new NBool(false);}
 			| fun_call  
-			| expr '+' expr {$$=new NBinaryOperator(*$1,"+",*$3);}
-			| expr '-' expr {$$=new NBinaryOperator(*$1,"-",*$3);}
-			| expr '/' expr {$$=new NBinaryOperator(*$1,"/",*$3);}
-			| expr '*' expr {$$=new NBinaryOperator(*$1,"*",*$3);}
-			| expr AND expr {$$=new NBinaryOperator(*$1,"and",*$3);}
-			| expr OR expr	{$$=new NBinaryOperator(*$1,"or",*$3);}
-			| expr '<' expr {$$=new NBinaryOperator(*$1,"<",*$3);}
-			| expr '>' expr {$$=new NBinaryOperator(*$1,">",*$3);}
-			| expr GEQ expr {$$=new NBinaryOperator(*$1,">=",*$3);}
-			| expr LEQ expr {$$=new NBinaryOperator(*$1,"<=",*$3);}
-			| expr NEQ expr {$$=new NBinaryOperator(*$1,"!=",*$3);}
-			| expr EQ expr {$$=new NBinaryOperator(*$1,"==",*$3);}
-			| '-' expr %prec NEG {$$=new NUnaryOperator("-",*$2);}
-			| '!' expr %prec NOT {$$=new NUnaryOperator("not",*$2);}
+			| expr '+' expr {$$=new NBinaryOperator($1,"+",$3);}
+			| expr '-' expr {$$=new NBinaryOperator($1,"-",$3);}
+			| expr '/' expr {$$=new NBinaryOperator($1,"/",$3);}
+			| expr '*' expr {$$=new NBinaryOperator($1,"*",$3);}
+			| expr AND expr {$$=new NBinaryOperator($1,"and",$3);}
+			| expr OR expr	{$$=new NBinaryOperator($1,"or",$3);}
+			| expr '<' expr {$$=new NBinaryOperator($1,"<",$3);}
+			| expr '>' expr {$$=new NBinaryOperator($1,">",$3);}
+			| expr GEQ expr {$$=new NBinaryOperator($1,">=",$3);}
+			| expr LEQ expr {$$=new NBinaryOperator($1,"<=",$3);}
+			| expr NEQ expr {$$=new NBinaryOperator($1,"!=",$3);}
+			| expr EQ expr {$$=new NBinaryOperator($1,"==",$3);}
+			| '-' expr %prec NEG {$$=new NUnaryOperator("-",$2);}
+			| '!' expr %prec NOT {$$=new NUnaryOperator("not",$2);}
 			| '(' expr ')'	{$$=$2;}
             /*| error ')' {@$.first_column = @1.first_column;
                             @$.first_line = @1.first_line;
@@ -270,8 +300,8 @@ lrexpr		: ident	{ if(Table.lookup($1->name)!=NULL){
 						}
 					}
 
-			| lrexpr '[' expr ']' {$$=new NArrayAccess(*$1,*$3);}
-			| lrexpr ACCESS ident 	{$$=new NStructAccess(*$1,*$3);}
+			| lrexpr '[' expr ']' {$$=new NArrayAccess($1,$3);}
+			| lrexpr ACCESS ident 	{$$=new NStructAccess($1,*$3);}
             /*| error ']' {}*/
 			; 
 
@@ -321,7 +351,7 @@ stmt		: ctrl_if
 			| block 	{$$=$<stmt>1;}
 			| var_asgn '.'
 			| varr_decl '.' {$$=$<stmt>1;}
-			| fun_call '.' {$$ = new NExpressionStatement(*$1);}
+			| fun_call '.' {$$ = new NExpressionStatement($1);}
 			| RETURN '.' {$$ = new NReturn();}
 			| RETURN expr '.' {$$ = new NReturn($2);}
 			| STOP '.' {$$ = new NStop();}
@@ -331,9 +361,9 @@ stmt		: ctrl_if
 
 fun_call	: ident fun_call_args {$$ = new NFunctionCall(*$1,*$2);}
 
-ctrl_if		: IF expr THEN block {$$ = new NIf(*$2,*$4);}
-			| IF expr THEN block ELSE block {$$ = new NIf(*$2,*$4,$6);}
-			| IF expr THEN block ELSE ctrl_if {$$ = new NIf(*$2,*$4,$6);}
+ctrl_if		: IF expr THEN block {$$ = new NIf($2,*$4);}
+			| IF expr THEN block ELSE block {$$ = new NIf($2,*$4,$6);}
+			| IF expr THEN block ELSE ctrl_if {$$ = new NIf($2,*$4,$6);}
 			;
 
 ctrl_while	: WHILE expr DO block {$$ = new NWhileDo($2,*$4);}
@@ -362,6 +392,7 @@ void yyerror(char const *s, ...){
         yylloc.last_line, yylloc.last_column);
   vfprintf(stderr, s, ap);
   fprintf(stderr, "\n");
+  flagerror = 1;
 
 }
 
