@@ -84,6 +84,7 @@ DOUBLE	 {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 	"in"				{return IN;}
 	"to"				{return TO;}
 	"return"			{return RETURN;}
+	"step"				{return STEP;}
 	
 
 	"+"					|

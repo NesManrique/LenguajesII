@@ -598,7 +598,17 @@ class NWhileDo : public NStatement{
 			TType *a,*b;
 			a=cond->typeChk(t);	
 			b=block.typeChk(t,expected);
-			if(a==NULL || b==NULL) return NULL;
+			if(a==NULL) {
+				cerr<<"\tin while condition"<<endl; 
+				return NULL;
+			}else if(!(a->name=="boolean")){
+				cerr<<"while condition is not a boolean expression";
+				return NULL;
+			}
+			if(b==NULL) {
+				cerr<<"\nin while block"<<endl; 
+				return NULL;
+			}
 			return t.lookupType("void");
 		}
 };
@@ -612,7 +622,17 @@ class NDoWhile : public NStatement{
 			TType *a,*b;
 			a=cond->typeChk(t);	
 			b=block.typeChk(t,expected);
-			if(a==NULL || b==NULL) return NULL;
+			if(a==NULL) {
+				cerr<<"\tin dowhile condition"<<endl; 
+				return NULL;
+			}else if(!(a->name=="boolean")){
+				cerr<<"while condition is not a boolean expression";
+				return NULL;
+			}
+			if(b==NULL) {
+				cerr<<"\nin dowhile block"<<endl; 
+				return NULL;
+			}
 			return t.lookupType("void");
 		}
 };
@@ -642,12 +662,59 @@ class NFor : public NStatement{
 		NIdentifier& id;
 		NExpression* beg;
 		NExpression* end;
+		NExpression* step;
 		NIdentifier* array;
-        NArray& cons_arr;
+        NArray* cons_arr;
 		NBlock& block;
-		NFor(NIdentifier& id,NExpression* beg,NExpression* end,NBlock& block): id(id),beg(beg),end(end),cons_arr(*(new NArray())),block(block){};
-		NFor(NIdentifier& id,NIdentifier* array,NBlock &block): id(id),array(array),cons_arr(*(new NArray())),block(block){};
-		NFor(NIdentifier& id,NArray& cons_arr,NBlock &block): id(id),cons_arr(cons_arr),block(block){};
+		NFor(NIdentifier& id,NExpression* beg,NExpression* end,NBlock& block): step(new NInteger(1)),id(id),beg(beg),end(end),cons_arr(NULL),block(block){};
+		NFor(NIdentifier& id,NExpression* beg,NExpression* end,NBlock& block,NExpression* step): id(id),beg(beg),end(end),cons_arr(NULL),block(block){};
+		NFor(NIdentifier& id,NIdentifier* array,NBlock &block): id(id),array(array),cons_arr(NULL),block(block),beg(NULL){};
+		NFor(NIdentifier& id,NArray* cons_arr,NBlock &block): id(id),cons_arr(cons_arr),block(block),beg(NULL){};
+		
+		TType* typeChk(Symtable& t,TType* expected = NULL){
+			bool err=false;
+			if (beg==NULL){
+				TType* artype;
+				if(array==NULL){
+					artype=cons_arr->typeChk(t);
+					if(artype==NULL){
+						err=true;
+						cerr<<"\tin for array"<<endl;
+					}
+				}else{
+					artype=array->typeChk(t);
+					if(artype==NULL){
+						err=true;
+						cerr<<"\tin for array var"<<endl;
+					}
+				}
+			}else{
+				TType* b= beg->typeChk(t);
+				TType* e= end->typeChk(t);
+				TType* s=NULL;
+				if(step!= NULL){
+					s=step->typeChk(t);
+				}
+				if(b==NULL){
+					err=true;
+					cerr<<"\tin for range beginning"<<endl;
+				}
+				if(e==NULL){
+					err=true;
+					cerr<<"\tin for range end"<<endl;
+				}
+				if(step!=NULL&&s==NULL){
+					err=true;
+					cerr<<"\tin for step"<<endl;
+				}
+				if(b->name!="integer" || e->name!="integer" || (step!=NULL && s->name!="integer")){
+					err=true;
+					cerr<<"Error: For ranges and steps must be integers"<<endl;
+				}
+			}
+			if(err)return NULL;
+			return t.lookupType("void");
+		}
 
 };
 

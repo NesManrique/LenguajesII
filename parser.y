@@ -52,7 +52,7 @@ Symtable Table;
 %token	<token> '+' '-' '/' '*'*/
 %token 	<token> IF THEN ELSE FROM TO IN NEXT STOP
 %token	<token>	CHAR UNION ARRAY TRUE FALSE
-%token 	<token> REGISTER DO WHILE RETURN FOR 
+%token 	<token> REGISTER DO WHILE RETURN FOR STEP
 %token	<string> ID
 
 /* Type of node our nonterminal represent */
@@ -314,8 +314,9 @@ ctrl_while	: WHILE expr DO block {$$ = new NWhileDo($2,*$4);}
 			;
 
 ctrl_for	: FOR ident FROM expr TO expr block {$$ = new NFor(*$2,$4,$6,*$7);}
+			| FOR ident FROM expr TO expr STEP expr block{$$ = new NFor(*$2,$4,$6,*$9,$8);}
 			| FOR ident IN ident block {$$ = new NFor(*$2,$4,*$5);}
-			| FOR ident IN cons_arr block {$$ = new NFor(*$2,*$4,*$5);}
+			| FOR ident IN cons_arr block {$$ = new NFor(*$2,$4,*$5);}
 			;
 
 var_asgn	: lrexpr '=' expr {$$ = new NAssignment($1,$3);}
